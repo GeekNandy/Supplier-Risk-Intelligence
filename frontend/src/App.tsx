@@ -130,7 +130,7 @@ export default function App() {
                 )}
               </div>
               <div hidden={tab !== 'research'}><Research status={status} /></div>
-              <HowItWorks status={status} />
+              {tab !== 'research' && <HowItWorks status={status} />}
             </>
           )}
         </main>

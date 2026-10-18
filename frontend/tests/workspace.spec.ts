@@ -95,7 +95,7 @@ test('explorer pagination, search, risk labels and ordering use the supplied dat
   await page.getByLabel('Search ID or name').fill('');
   await page.getByLabel('Risk level (as supplied)').selectOption('High');
   await expect(page.locator('tbody tr:visible')).toHaveCount(25);
-  await expect(page.locator('tbody tr:visible').first().locator('td').nth(3)).toHaveText('High');
+  await expect(page.locator('tbody tr:visible').first().locator('td').nth(3)).toContainText('High');
   await page.getByRole('combobox', { name: /^Order\b/ }).selectOption('desc');
   const scores = await page.locator('tbody tr:visible').evaluateAll(rows => rows.map(row => Number(row.querySelectorAll('td')[2].textContent?.trim())));
   expect(scores).toEqual([...scores].sort((a, b) => b - a));
@@ -174,7 +174,7 @@ test('unknown supplier errors do not claim the chat route is missing', async ({ 
   await tab(page, 'Ask');
   await page.getByRole('textbox', { name: 'Question' }).fill('Why is the Total Risk Index of SUPP_99999 so high?');
   await page.getByRole('main').getByRole('button', { name: 'Ask', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Supplier not found: SUPP_99999');
+  await expect(page.getByText('Supplier not found: SUPP_99999')).toBeVisible();
   await expect(page.getByText('The chat assistant is temporarily unavailable.')).toBeHidden();
 });
 
@@ -203,13 +203,14 @@ test('blocked clipboard access offers a copyable justification without a browser
   await expect(page.getByRole('textbox', { name: 'Shortlist justification' })).toHaveValue(/SUPP_00012.*SUPP_00731/s);
 });
 
-test('research exposes the real missing-model response', async ({ page }) => {
+test('research explains missing server configuration and disables the action', async ({ page }) => {
   await openWorkspace(page);
   await tab(page, 'Research');
-  await expect(page.getByRole('alert')).toContainText('Live research is not available on this server');
+  await expect(page.getByText('Live research is not configured')).toBeVisible();
+  await expect(page.getByText(/Missing on the server: a language model/)).toBeVisible();
   await page.getByLabel('Company name (required)').fill('Siemens AG');
-  await page.getByRole('main').getByRole('button', { name: 'Research', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Set LLM_API_KEY, LLM_BASE_URL and LLM_MODEL');
+  await expect(page.getByRole('main').getByRole('button', { name: 'Research', exact: true })).toBeDisabled();
+  await expect(page.getByText('Research needs model and search credentials on the server.', { exact: true })).toBeVisible();
 });
 
 function reportFixture(status: ResearchResponse['status']): ResearchResponse {

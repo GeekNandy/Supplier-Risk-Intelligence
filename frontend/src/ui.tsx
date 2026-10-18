@@ -54,21 +54,25 @@ export function Spinner({ label }: { label: string }) {
 export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const message = error instanceof Error ? error.message : String(error);
   return (
+    <div>
     <IxMessageBar type="alarm" persistent>
       <span className="flex flex-wrap items-center justify-between gap-3">
         <span>{message}</span>
         {onRetry && <Btn variant="secondary" onClick={onRetry}>Retry</Btn>}
       </span>
     </IxMessageBar>
+    </div>
   );
 }
 
 /** Shown when a contracted AI route returns 501/404 because the backend has not shipped it. */
 export function Unavailable({ feature }: { feature: string }) {
   return (
+    <div>
     <IxMessageBar type="info" persistent>
       <strong className="font-semibold">{feature} is temporarily unavailable.</strong> The server has not enabled this route yet. Supplier search and comparison keep working.
     </IxMessageBar>
+    </div>
   );
 }
 
@@ -112,7 +116,7 @@ export function Tip({ id, text, children }: { id: string; text?: string; childre
   const show = (event: { currentTarget: HTMLElement }) => setAnchor(event.currentTarget.getBoundingClientRect());
   const hide = () => setAnchor(null);
   return (
-    <div onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
+    <span className="block" onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
       {children}
       <span id={id} className="sr-only">{text}</span>
       {anchor && createPortal(
@@ -125,7 +129,7 @@ export function Tip({ id, text, children }: { id: string; text?: string; childre
         </span>,
         document.body,
       )}
-    </div>
+    </span>
   );
 }
 
@@ -147,7 +151,7 @@ export function Pill({ children, tone = 'gray', mono = false }: { children: Reac
 /** ⓘ trigger with a definition tooltip; keyboard focusable. */
 export function InfoTip({ id, text, label = 'More information' }: { id: string; text: string; label?: string }) {
   return (
-    <span className="inline-block align-middle">
+    <span className="inline-block align-middle [&>span]:inline-block">
       <Tip id={id} text={text}>
         <button type="button" className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-semibold normal-case text-gray-500 ring-1 ring-gray-300 hover:text-accent" aria-label={label} aria-describedby={id}>i</button>
       </Tip>
@@ -180,6 +184,7 @@ export function EmptyState({ title, children, action }: { title: string; childre
 /** iX warning message: what is missing and what to do. */
 export function WarningBox({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
+    <div>
     <IxMessageBar type="warning" persistent>
       <span className="flex flex-wrap items-start justify-between gap-4">
         <span>
@@ -189,6 +194,7 @@ export function WarningBox({ title, children, action }: { title: string; childre
         {action}
       </span>
     </IxMessageBar>
+    </div>
   );
 }
 
@@ -196,6 +202,7 @@ export function WarningBox({ title, children, action }: { title: string; childre
 export function InfoLine({ children, more }: { children: ReactNode; more?: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
+    <div>
     <IxMessageBar type="info" persistent>
       <span>
         {children}
@@ -203,6 +210,7 @@ export function InfoLine({ children, more }: { children: ReactNode; more?: React
       </span>
       {open && more && <span className="mt-1 block text-gray-600">{more}</span>}
     </IxMessageBar>
+    </div>
   );
 }
 

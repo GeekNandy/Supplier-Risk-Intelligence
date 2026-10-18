@@ -44,7 +44,7 @@ export default function LoadData({ templateColumns, onLoaded, onUseDemo, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/40 p-4 sm:p-8" role="dialog" aria-modal="true" aria-labelledby="load-data-title">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[var(--theme-color-backdrop)] p-4 sm:p-8" role="dialog" aria-modal="true" aria-labelledby="load-data-title">
       <div className="w-full max-w-4xl rounded-xl border border-gray-200 bg-white">
         <header className="flex items-start justify-between gap-3 border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white px-6 py-4">
           <div>
