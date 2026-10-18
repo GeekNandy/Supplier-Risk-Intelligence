@@ -2,6 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Supplier Risk Intelligence",
+    "description": "Jury HTTP Basic login applies when JURY_USERNAME and JURY_PASSWORD are set. Health/readiness remain public. Local development permits anonymous access when both are blank.",
     "version": "0.1.0"
   },
   "paths": {
@@ -9,6 +10,23 @@
       "get": {
         "summary": "Health",
         "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ready": {
+      "get": {
+        "summary": "Ready",
+        "description": "Local readiness only: no billable provider calls.",
+        "operationId": "ready_api_ready_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -34,7 +52,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JuryBasic": []
+          }
+        ]
       }
     },
     "/api/meta": {
@@ -46,11 +69,18 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataResponse"
+                }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JuryBasic": []
+          }
+        ]
       }
     },
     "/api/suppliers": {
@@ -64,6 +94,7 @@
             "required": false,
             "schema": {
               "type": "string",
+              "maxLength": 300,
               "default": "",
               "title": "Q"
             }
@@ -75,7 +106,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 80
                 },
                 {
                   "type": "null"
@@ -130,6 +162,24 @@
               "default": 50,
               "title": "Limit"
             }
+          },
+          {
+            "name": "max_total_risk",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Total Risk"
+            }
           }
         ],
         "responses": {
@@ -137,7 +187,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierPage"
+                }
               }
             }
           },
@@ -151,7 +203,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JuryBasic": []
+          }
+        ]
       }
     },
     "/api/suppliers/{supplier_id}": {
@@ -174,7 +231,26 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Supplier Detail Api Suppliers  Supplier Id  Get"
+                }
               }
             }
           },
@@ -188,7 +264,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JuryBasic": []
+          }
+        ]
       }
     },
     "/api/compare": {
@@ -210,7 +291,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
               }
             }
           },
@@ -224,7 +307,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JuryBasic": []
+          }
+        ]
       }
     },
     "/api/chat": {
@@ -262,7 +350,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JuryBasic": []
+          }
+        ]
       }
     },
     "/api/research": {
@@ -300,7 +393,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JuryBasic": []
+          }
+        ]
       }
     }
   },
@@ -316,13 +414,16 @@
           },
           "supplier_ids": {
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
             },
             "type": "array",
             "maxItems": 20,
             "title": "Supplier Ids"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "message"
@@ -446,7 +547,9 @@
         "properties": {
           "supplier_ids": {
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
             },
             "type": "array",
             "maxItems": 20,
@@ -455,15 +558,89 @@
           },
           "rank_by": {
             "type": "string",
+            "maxLength": 100,
             "title": "Rank By",
             "default": "Total_Risk_Index"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "supplier_ids"
         ],
         "title": "CompareRequest"
+      },
+      "ComparisonResponse": {
+        "properties": {
+          "suppliers": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Suppliers"
+          },
+          "risk_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Risk Fields"
+          },
+          "rank_by": {
+            "type": "string",
+            "title": "Rank By"
+          },
+          "lowest_risk_supplier_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Lowest Risk Supplier Ids"
+          },
+          "highest_risk_categories": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/RiskCategory"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Highest Risk Categories"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "suppliers",
+          "risk_fields",
+          "rank_by",
+          "lowest_risk_supplier_ids",
+          "highest_risk_categories",
+          "notes"
+        ],
+        "title": "ComparisonResponse"
       },
       "Evidence": {
         "properties": {
@@ -557,6 +734,66 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "MetadataResponse": {
+        "properties": {
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "numeric_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Numeric Fields"
+          },
+          "risk_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Risk Fields"
+          },
+          "risk_levels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Risk Levels"
+          },
+          "criteria_markdown": {
+            "type": "string",
+            "title": "Criteria Markdown"
+          },
+          "score_direction": {
+            "type": "string",
+            "title": "Score Direction"
+          },
+          "total_risk_note": {
+            "type": "string",
+            "title": "Total Risk Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "row_count",
+          "columns",
+          "numeric_fields",
+          "risk_fields",
+          "risk_levels",
+          "criteria_markdown",
+          "score_direction",
+          "total_risk_note"
+        ],
+        "title": "MetadataResponse"
+      },
       "ResearchRequest": {
         "properties": {
           "company_name": {
@@ -590,6 +827,7 @@
             "title": "Website"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "company_name"
@@ -708,6 +946,31 @@
         ],
         "title": "ResearchStep"
       },
+      "RiskCategory": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "value"
+        ],
+        "title": "RiskCategory"
+      },
       "Source": {
         "properties": {
           "id": {
@@ -760,6 +1023,53 @@
           "excerpt"
         ],
         "title": "Source"
+      },
+      "SupplierPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "SupplierPage"
       },
       "ToolActivity": {
         "properties": {
@@ -828,6 +1138,12 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "JuryBasic": {
+        "type": "http",
+        "scheme": "basic"
       }
     }
   }

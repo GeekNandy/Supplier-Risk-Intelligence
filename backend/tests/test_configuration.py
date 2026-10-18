@@ -11,7 +11,9 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "configure_ai.py"
 def test_configuration_preserves_other_settings_and_quotes_keys(tmp_path, capsys):
     save = runpy.run_path(str(SCRIPT))["save_configuration"]
     path = tmp_path / ".env"
-    path.write_text("# Existing deployment settings\nCORS_ORIGINS=https://example.com\nCUSTOM_SETTING=keep-me\nLLM_API_KEY=old-key\n")
+    path.write_text(
+        "# Existing deployment settings\nCORS_ORIGINS=https://example.com\nCUSTOM_SETTING=keep-me\nLLM_API_KEY=old-key\n"
+    )
     key = "test-key'with#special=characters"
     save(path, {"LLM_API_KEY": key, "TAVILY_API_KEY": "test-search-key"})
     values = dotenv_values(path)

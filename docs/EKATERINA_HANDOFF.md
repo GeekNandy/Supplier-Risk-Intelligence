@@ -13,7 +13,7 @@ You own the buyer workspace in `frontend/`. Sharad owns Python, model/search int
 ## Priority 1: explorer and 20-supplier comparison
 
 - Load `/api/meta` for risk fields and available overall risk levels. Use exact field names from the API.
-- Search/filter/rank with `GET /api/suppliers?q=...&risk_level=High&sort_by=Total_Risk_Index&order=asc&offset=0&limit=50`.
+- Search/filter/rank with `GET /api/suppliers?q=...&risk_level=High&sort_by=Total_Risk_Index&order=asc&offset=0&limit=50`. An optional `max_total_risk=60` supplies a total-risk threshold; use the actual risk labels from metadata.
 - Use server pagination. Do not fetch/render all 10,000 rows at once.
 - Keep a selected-supplier tray keyed by `supplierID`, with removal and a visible 20-item limit.
 - Call `POST /api/compare` with `supplier_ids` and an optional `rank_by` risk field.
@@ -62,8 +62,16 @@ You own the buyer workspace in `frontend/`. Sharad owns Python, model/search int
 - Sharad has not changed frontend files in the backend implementation, so UI work can be developed independently.
 - Before merging UI changes, run `npm run build` and exercise the deployed API integration.
 
+## Backend delivery status and login
+
+Sharad's backend now includes jury authentication, readiness checks, strict request validation, provider-failure handling and tests. `docs/openapi.json` includes supplier response schemas, chat/research contracts and the jury security scheme. The backend production smoke check verifies a wheel installation serving built React assets and the API together.
+
+No custom login screen is needed for the hackathon: on the deployed same-origin app, the browser's HTTP Basic prompt handles jury login. For local UI development, leave both `JURY_USERNAME` and `JURY_PASSWORD` blank in your own `.env`. `GET /api/ready` is a public platform check; `/api/status` reports configuration only and does not prove provider connectivity.
+
+Next actions for you: finish the explorer/selection/heatmap, chat evidence UI and research source views, then merge the backend branch into your working branch and run the full buyer journey. Live model/search smoke testing still needs the team's provider keys.
+
 ## Demo journey
 
 Filter suppliers → select three → compare risk profiles → ask which has lowest financial risk → inspect evidence → research a real company → open a source link.
 
-Jury authentication, deployed URLs and the two-minute video remain joint delivery tasks. A shortlist memo is a stretch feature once the core journey works.
+Jury credential configuration, the deployed URL, live provider checks and the two-minute video remain joint delivery tasks. A shortlist memo is a stretch feature once the core journey works.

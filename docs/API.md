@@ -7,13 +7,16 @@ Python owns `/api`. Vite proxies API requests during development; the production
 | Method | Path | Request / result |
 |---|---|---|
 | GET | `/api/health` | `status`, `dataset_present` |
-| GET | `/api/status` | `chat_mode=live|data_only|configuration_required`, `model_configured`, `search_configured`, `research_ready`, nullable `model`; no keys |
+| GET | `/api/ready` | `status=ready`, `supplier_count`, `jury_auth_enabled`, `live_ai_configured`; 503 on invalid dataset/required configuration; no provider calls |
+| GET | `/api/status` | `chat_mode=live|data_only|configuration_required`, `model_configured`, `search_configured`, `research_ready`, nullable `model`, `jury_auth_enabled`, `configuration_only=true`; no keys or provider calls |
 | GET | `/api/meta` | Row count, columns, numeric/risk fields, overall risk levels, original criteria Markdown and score semantics |
-| GET | `/api/suppliers` | `q`, `risk_level`, `sort_by`, `order=asc|desc`, `offset`, `limit` (1–200) → `items`, `total`, `offset`, `limit` |
+| GET | `/api/suppliers` | `q` (≤300 chars), `risk_level`, `max_total_risk` (0–100), `sort_by`, `order=asc|desc`, `offset`, `limit` (1–200) → `items`, `total`, `offset`, `limit` |
 | GET | `/api/suppliers/{supplier_id}` | Original supplier row; 404 for unknown ID |
 | POST | `/api/compare` | `supplier_ids` (1–20 unique IDs), `rank_by` (risk field) → original supplier rows, lowest-risk IDs including ties, top observed risk categories and notes |
 
 Fields retain their original dataset names. `supplierID`, `Supplier Name`, and `Total_Risk_Index` are canonical keys. Filter labels come from `Total_Risk_Index_Level`. Numeric/risk fields come from `/api/meta`. All supplied risk scores, including `Financial_Health_Score`, use 0=no risk and 100=maximum risk. Delivery/confirmation percentages have their own semantics. Missing scores remain null and are excluded when choosing a lowest score.
+
+Unknown risk labels or sort fields return 400. `max_total_risk` excludes unknown total scores. Pagination past the last row returns an empty `items` array with the same filtered `total`. Comparisons and selected chat IDs reject duplicates, blank IDs and IDs longer than 100 characters. POST request objects reject unknown fields.
 
 Example comparison:
 
@@ -50,12 +53,14 @@ Response fields:
 With model credentials, use native OpenAI-compatible tool calling through `ModelClient` and three allowlisted tools:
 
 - `get_supplier(supplier_id)`
-- `search_suppliers(q, risk_level, sort_by, order, offset, limit)`; tool results capped at 20 rows
+- `search_suppliers(q, risk_level, sort_by, order, offset, limit, max_total_risk)`; tool results capped at 20 rows
 - `compare_suppliers(supplier_ids, rank_by)`; 1–20 unique IDs
 
 Arguments are validated using Pydantic with unknown fields forbidden. Numeric operations happen in Python. No generated Python/SQL is executed. The CSV is not sent wholesale to the model. The model receives criteria definitions and bounded tool results.
 
-The final evidence references must point to rows returned by a tool in that request. Values are filled by the server, not accepted from the model. Unknown evidence references are removed. Unsupported scalar values or invalid references in a generated explanation trigger a verified-values response. If there is no verified evidence, the generated supplier answer is withheld. These checks validate references/scalars; they do not formally prove every natural-language interpretation or ranking recommendation.
+The final evidence references must point to rows returned by a tool in that request. Values are filled by the server, not accepted from the model. Unknown evidence references are removed. Unsupported scalar values, unknown supplier mentions or invalid references trigger a verified-values response. If there is no verified evidence, the generated supplier answer is withheld.
+
+For clear lowest-risk questions on the supported financial, credit, quality, cyber and total criteria, completed comparison-tool results determine the rendered ranking and suggested winners. The server fills evidence for all compared suppliers and preserves ties. A comparison missing any explicitly requested/selected supplier is withheld. Broader natural-language interpretations remain model-generated and should be reviewed against evidence.
 
 Budget: at most four model calls, three tool rounds, eight tool invocations, 60 seconds total. Invalid tool arguments return an error to the model so it can correct its request within the budget.
 
@@ -101,17 +106,27 @@ Budget: four searches total, two extraction batches of at most five pages, three
 
 Publication dates are preserved from source-provider metadata; missing dates remain null. Retrieval time is not publication time. Source IDs in findings and entity resolution must refer to retrieved sources. Semantic evaluation of identity/claims/severity remains model-generated; the UI should make source review easy. Source text is treated as untrusted evidence, not executable instructions. Reports keep real companies separate from the anonymized dataset and do not assign invented numerical risk scores.
 
-The endpoint returns one JSON response after execution; it does not stream progress. Show a generic in-progress state, then display the actual `steps` after completion. Partial search/extraction/report failures are surfaced through `limitations` or an HTTP error. Do not display missing negative coverage as low risk.
+The endpoint returns one JSON response after execution; it does not stream progress. Show a generic in-progress state, then display the actual `steps` after completion. Search, extraction, red-flag assessment and report-generation failures preserve available sources in partial reports. A failed identity model step returns a partial report with unverified identity and no risk findings. An initial search failure or overall workflow timeout returns an HTTP error. Claims containing unrecognized inline source references are removed, as are findings with invalid structured source IDs. Do not display missing negative coverage as low risk.
+
+## Jury access and request limits
+
+When `JURY_USERNAME` and `JURY_PASSWORD` are set, HTTP Basic authentication covers the UI, API and Swagger/OpenAPI documents. Passwords must contain at least 12 characters. `GET /api/health` and `GET /api/ready` remain public for platform probes. CORS preflight does not require login. Both credentials can be blank for local development; partial/invalid credential configuration returns 503 instead of exposing the app.
+
+Production should set `REQUIRE_JURY_AUTH=true`; set `REQUIRE_LIVE_AI=true` to fail readiness when complete model/search configuration is absent. These checks validate local configuration, not provider credit balance or connectivity. Use HTTPS in production. The OpenAPI `JuryBasic` security scheme documents this optional deployment authentication.
+
+API POST bodies are limited to 64 KiB, including chunked requests. No conversation, jury passwords or provider credentials are returned by the API or stored in generated reports.
 
 ## Error handling
 
 | HTTP status | Behavior |
 |---|---|
 | 400 | Invalid data field or malformed data operation |
+| 401 | Jury login missing, invalid or malformed; includes `WWW-Authenticate` |
 | 404 | Supplier lookup failed |
+| 413 | API POST request body exceeds 64 KiB |
 | 422 | Request/schema validation failed; detail can be an array |
 | 502 | Provider response invalid/rejected, bad model JSON, or exhausted tool budget |
-| 503 | Missing configuration/dataset, provider authentication failure or provider rate limit |
+| 503 | Missing/invalid configuration or dataset, provider authentication failure or provider rate limit |
 | 504 | Provider timeout or workflow deadline exceeded |
 
 Ordinary application errors use `{"detail":"message"}`. Provider response bodies and credentials are not echoed. A configured provider failure never silently masquerades as successful model use. FastAPI validation errors use its standard `detail` array.

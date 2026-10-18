@@ -39,7 +39,8 @@ git switch feature-sharad
 git pull --ff-only
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e './backend[dev]'
+python -m pip install --require-hashes -r backend/requirements-dev.lock
+python -m pip install --no-deps -e backend
 python scripts/configure_ai.py
 ```
 

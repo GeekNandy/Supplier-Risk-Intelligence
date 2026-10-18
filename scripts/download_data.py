@@ -1,4 +1,5 @@
 """Download the original public challenge inputs; no sample data is fabricated."""
+
 import csv
 from pathlib import Path
 from urllib.request import urlopen
@@ -19,6 +20,7 @@ if __name__ == "__main__":
         temporary.write_bytes(content)
         temporary.replace(destination)
         print(f"Saved {filename}: {len(content):,} bytes")
-    with (DATA_DIR / "supplier_risk_dataset.csv").open(encoding="utf-8-sig", newline="") as source:
+    with (DATA_DIR / "supplier_risk_dataset.csv").open(
+        encoding="utf-8-sig", newline=""
+    ) as source:
         print(f"Supplier rows: {sum(1 for _ in csv.DictReader(source)):,}")
-

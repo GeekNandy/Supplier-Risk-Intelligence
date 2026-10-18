@@ -25,7 +25,8 @@ From the repository root:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e './backend[dev]'
+pip install --require-hashes -r backend/requirements-dev.lock
+pip install --no-deps -e backend
 # First setup only; preserve an existing .env containing your keys.
 cp -n .env.example .env
 uvicorn app.main:app --reload --port 8000
@@ -82,16 +83,17 @@ The model/search paths are tested with mocked provider responses. Actual Nemotro
 ## What already works
 
 - Original challenge CSV and criteria definitions.
-- Supplier search, risk-level filter, numerical sort, pagination and supplier detail.
+- Supplier search, supplied risk-level filter, maximum total-risk filter, numerical sort, pagination and supplier detail.
 - Comparison of 1–20 unique suppliers, ties, missing-value handling and highest observed risk categories.
 - Grounded chatbot using allowlisted, validated supplier tools. Evidence values come from actual tool-returned rows; unsupported references are removed and unsupported scalar values trigger a verified-values response.
 - A bounded company research workflow: identity check, model-generated plan, two risk searches, source extraction, one evidenced red-flag follow-up, and cited findings.
 - Research reports distinguish unresolved company identity, partial evidence and a completed workflow; retain source dates, retrieval dates and explicit limitations.
-- Clear provider/configuration errors, timeouts, a status endpoint and a smoke-test command.
+- Clear provider/configuration errors, timeouts, readiness checks and smoke-test commands.
+- Optional jury HTTP Basic login protecting the UI, API and API docs; configuration failures close access.
 - React starter with typed API client, Tailwind and live supplier data.
-- Generated OpenAPI contract, API checks and a Dockerfile for a single web service.
+- Typed response schemas, a generated OpenAPI contract, locked dependencies, automated checks and a non-root Docker image definition for a single web service.
 
-UI features beyond the data connection, jury authentication, live provider verification and final deployment remain to finish. APIs and frontend expectations are documented in `docs/API.md` and `docs/EKATERINA_HANDOFF.md`.
+The backend implementation is ready for frontend integration. UI features beyond the data connection, credential-backed live provider verification and final deployment remain. APIs and frontend expectations are documented in `docs/API.md` and `docs/EKATERINA_HANDOFF.md`; production instructions are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Three-hour build plan
 
@@ -109,6 +111,8 @@ Bonus only after the core journey works: shortlist memo generated from the same 
 
 - `backend/app/data.py`: deterministic data access and calculations. Reuse these functions as LLM tools.
 - `backend/app/main.py`: FastAPI routes and static frontend serving.
+- `backend/app/access.py`: jury access and a 64 KiB API request-body limit.
+- `backend/app/runtime.py`: asset-root resolution for editable and wheel/container installations.
 - `backend/app/chat.py`: bounded tool-calling chat, citation checks and data-only mode.
 - `backend/app/tools.py`: allowlisted Pydantic-validated supplier tools.
 - `backend/app/providers.py`: hosted model/search/extraction adapters and sanitized error handling.
@@ -129,23 +133,39 @@ Chat allows at most four model calls and eight supplier tool invocations within 
 ## Verification
 
 ```bash
-pytest backend/tests
-cd frontend
-npm run build
+ruff check backend scripts
+ruff format --check backend scripts
+pytest backend/tests -q
+python scripts/export_openapi.py --check
+python -m build backend --outdir dist
+npm --prefix frontend ci
+npm --prefix frontend run build
 ```
 
-## Deployment
+The tests cover real challenge data, 20-supplier comparisons, grounding checks, native provider HTTP contracts, partial research failures, authentication, malformed inputs and configuration errors. They use HTTP transport stubs for external providers and never spend API credits. [Verification details](docs/VERIFICATION.md) distinguish these checks from live API verification.
 
-The production Docker image builds React and serves it from FastAPI under the same origin. This allows one service and one URL for the demo. From the repository root:
+The GitHub workflow in `.github/workflows/verify.yml` runs linting, tests, contract checks, both builds, a clean wheel smoke test, and a production container build/smoke test. Run `python scripts/export_openapi.py` after API schema changes.
+
+## Jury access and deployment
+
+Configure jury access in your own terminal:
+
+```bash
+python scripts/configure_jury.py
+```
+
+The password prompts are hidden, require confirmation, and preserve existing API keys. Restart the server afterward. Local development can leave both jury variables blank. For deployment, set `JURY_USERNAME`, `JURY_PASSWORD` (at least 12 characters), `REQUIRE_JURY_AUTH=true`, and `REQUIRE_LIVE_AI=true` through your host's secret settings. Use HTTPS and share jury credentials privately.
+
+The production Docker image builds React and serves it from FastAPI under one origin. From the repository root:
 
 ```bash
 docker build -t supplier-risk-intelligence .
 docker run --rm --env-file .env -p 8000:8000 supplier-risk-intelligence
 ```
 
-For local production verification without Docker, run `npm run build` in `frontend`, then restart Uvicorn from the root. `/` serves the UI and `/api/*` serves the API.
+`GET /api/health` is public liveness; `GET /api/ready` checks the dataset and required configuration without spending API credits. All other paths require jury login when configured. A browser shows its native login prompt; Ekaterina does not need to build a login page.
 
-Before submission, add simple jury access using server-side credentials from environment variables. Share credentials privately with the jury; do not commit credentials or API keys. This starter is not yet authenticated.
+For local production verification without Docker, build `frontend`, then restart Uvicorn from the root. For a wheel installation, set `APP_ROOT` to the absolute checkout/asset directory. See [the deployment guide](docs/DEPLOYMENT.md) for clean-install and container smoke commands.
 
 ## Submission checklist
 

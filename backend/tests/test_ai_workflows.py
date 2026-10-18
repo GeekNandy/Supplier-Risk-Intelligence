@@ -1,4 +1,5 @@
 """Exercise grounding, research branching and failure handling without paid APIs."""
+
 import asyncio
 import json
 
@@ -27,22 +28,40 @@ def live_settings(monkeypatch):
 
 
 def test_data_only_answers_both_challenge_examples():
-    result = client.post("/api/chat", json={"message": "Which of SUPP_00012, SUPP_00450 and SUPP_00731 has the lowest financial risk?"}).json()
+    result = client.post(
+        "/api/chat",
+        json={
+            "message": "Which of SUPP_00012, SUPP_00450 and SUPP_00731 has the lowest financial risk?"
+        },
+    ).json()
     assert result["mode"] == "data_only" and result["model"] is None
     assert result["suggested_supplier_ids"] == ["SUPP_00731"]
     assert [item["value"] for item in result["evidence"]] == [54, 65, 53]
-    why = client.post("/api/chat", json={"message": "Why is the Total Risk Index of SUPP_00018 so high?"}).json()
+    why = client.post(
+        "/api/chat", json={"message": "Why is the Total Risk Index of SUPP_00018 so high?"}
+    ).json()
     assert why["evidence"][0]["value"] == 80
     assert "weights" in why["answer"]
     assert "99" in why["answer"] and "98" in why["answer"]
 
 
 def test_no_key_mode_does_not_substitute_overall_risk_for_delivery():
-    result = client.post("/api/chat", json={"message": "Which has the lowest delivery risk?", "supplier_ids": ["SUPP_00012", "SUPP_00450"]}).json()
+    result = client.post(
+        "/api/chat",
+        json={
+            "message": "Which has the lowest delivery risk?",
+            "supplier_ids": ["SUPP_00012", "SUPP_00450"],
+        },
+    ).json()
     assert result["evidence"] == []
     assert "outside" in result["answer"]
     assert client.post("/api/chat", json={"message": "   "}).status_code == 422
-    assert client.post("/api/chat", json={"message": "Why is the Total Risk Index of SUPP_99999 so high?"}).status_code == 404
+    assert (
+        client.post(
+            "/api/chat", json={"message": "Why is the Total Risk Index of SUPP_99999 so high?"}
+        ).status_code
+        == 404
+    )
 
 
 def test_live_tool_loop_resolves_values_from_data_not_model(monkeypatch):
@@ -52,12 +71,50 @@ def test_live_tool_loop_resolves_values_from_data_not_model(monkeypatch):
     async def complete(self, messages, tools=None):
         messages_seen.append(list(messages))
         if len(messages_seen) == 1:
-            assert {tool["function"]["name"] for tool in tools} == {"get_supplier", "search_suppliers", "compare_suppliers"}
-            return {"role": "assistant", "content": None, "tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "compare_suppliers", "arguments": json.dumps({"supplier_ids": ["SUPP_00012", "SUPP_00450", "SUPP_00731"], "rank_by": "Financial_Health_Score"})}}]}
-        return {"content": json.dumps({"answer": "SUPP_00731 has the lowest financial risk with a score of 53.", "evidence": [{"supplier_id": "SUPP_00731", "field": "Financial_Health_Score", "value": 9999}], "suggested_supplier_ids": ["SUPP_00731"]})}
+            assert {tool["function"]["name"] for tool in tools} == {
+                "get_supplier",
+                "search_suppliers",
+                "compare_suppliers",
+            }
+            return {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {
+                            "name": "compare_suppliers",
+                            "arguments": json.dumps(
+                                {
+                                    "supplier_ids": ["SUPP_00012", "SUPP_00450", "SUPP_00731"],
+                                    "rank_by": "Financial_Health_Score",
+                                }
+                            ),
+                        },
+                    }
+                ],
+            }
+        return {
+            "content": json.dumps(
+                {
+                    "answer": "SUPP_00731 has the lowest financial risk with a score of 53.",
+                    "evidence": [
+                        {
+                            "supplier_id": "SUPP_00731",
+                            "field": "Financial_Health_Score",
+                            "value": 9999,
+                        }
+                    ],
+                    "suggested_supplier_ids": ["SUPP_00731"],
+                }
+            )
+        }
 
     monkeypatch.setattr(ModelClient, "complete", complete)
-    response = client.post("/api/chat", json={"message": "Which selected supplier has lowest financial risk?"})
+    response = client.post(
+        "/api/chat", json={"message": "Which selected supplier has lowest financial risk?"}
+    )
     assert response.status_code == 200
     result = response.json()
     assert result["mode"] == "live" and result["model"] == "test-nemotron"
@@ -66,8 +123,13 @@ def test_live_tool_loop_resolves_values_from_data_not_model(monkeypatch):
     assert any(message["role"] == "tool" for message in messages_seen[1])
 
 
-@pytest.mark.parametrize("bad_answer,bad_reference", [("The risk score is 9999.", False), ("SUPP_99999 is the winner.", True)])
-def test_unsupported_narrative_values_and_citations_are_withheld(monkeypatch, bad_answer, bad_reference):
+@pytest.mark.parametrize(
+    "bad_answer,bad_reference",
+    [("The risk score is 9999.", False), ("SUPP_99999 is the winner.", True)],
+)
+def test_unsupported_narrative_values_and_citations_are_withheld(
+    monkeypatch, bad_answer, bad_reference
+):
     live_settings(monkeypatch)
     calls = 0
 
@@ -75,7 +137,17 @@ def test_unsupported_narrative_values_and_citations_are_withheld(monkeypatch, ba
         nonlocal calls
         calls += 1
         if calls == 1:
-            return {"tool_calls": [{"id": "lookup", "function": {"name": "get_supplier", "arguments": '{"supplier_id":"SUPP_00731"}'}}]}
+            return {
+                "tool_calls": [
+                    {
+                        "id": "lookup",
+                        "function": {
+                            "name": "get_supplier",
+                            "arguments": '{"supplier_id":"SUPP_00731"}',
+                        },
+                    }
+                ]
+            }
         evidence = [{"supplier_id": "SUPP_00731", "field": "Financial_Health_Score"}]
         if bad_reference:
             evidence.append({"supplier_id": "SUPP_99999", "field": "Financial_Health_Score"})
@@ -95,7 +167,17 @@ def test_unknown_tools_cannot_execute_arbitrary_code(monkeypatch):
         nonlocal calls
         calls += 1
         if calls == 1:
-            return {"tool_calls": [{"id": "bad", "function": {"name": "execute_python", "arguments": '{"code":"raise RuntimeError()"}'}}]}
+            return {
+                "tool_calls": [
+                    {
+                        "id": "bad",
+                        "function": {
+                            "name": "execute_python",
+                            "arguments": '{"code":"raise RuntimeError()"}',
+                        },
+                    }
+                ]
+            }
         assert json.loads(messages[-1]["content"]).get("error")
         return {"content": '{"answer":"A fabricated supplier answer","evidence":[]}'}
 
@@ -113,7 +195,17 @@ def test_model_tool_loop_has_a_finite_budget(monkeypatch):
     async def complete(self, messages, tools=None):
         nonlocal calls
         calls += 1
-        return {"tool_calls": [{"id": f"lookup{calls}", "function": {"name": "get_supplier", "arguments": '{"supplier_id":"SUPP_00731"}'}}]}
+        return {
+            "tool_calls": [
+                {
+                    "id": f"lookup{calls}",
+                    "function": {
+                        "name": "get_supplier",
+                        "arguments": '{"supplier_id":"SUPP_00731"}',
+                    },
+                }
+            ]
+        }
 
     monkeypatch.setattr(ModelClient, "complete", complete)
     result = client.post("/api/chat", json={"message": "Keep searching"})
@@ -123,8 +215,18 @@ def test_model_tool_loop_has_a_finite_budget(monkeypatch):
 def test_research_requires_configuration_and_real_company_inputs():
     assert client.post("/api/research", json={"company_name": "Acme Rail"}).status_code == 503
     assert client.post("/api/research", json={"company_name": "SUPP_00018"}).status_code == 422
-    for url in ["http://127.0.0.1/admin", "http://localhost/secrets", "file:///etc/passwd", "https://user:secret@example.com"]:
-        assert client.post("/api/research", json={"company_name": "Acme Rail", "website": url}).status_code == 422
+    for url in [
+        "http://127.0.0.1/admin",
+        "http://localhost/secrets",
+        "file:///etc/passwd",
+        "https://user:secret@example.com",
+    ]:
+        assert (
+            client.post(
+                "/api/research", json={"company_name": "Acme Rail", "website": url}
+            ).status_code
+            == 422
+        )
     assert client.get("/api/status").json()["research_ready"] is False
 
 
@@ -134,10 +236,28 @@ def test_ambiguous_company_stops_before_risk_search(monkeypatch):
 
     async def search(self, query):
         queries.append(query)
-        return [{"url": "https://example.com/company", "title": "Acme companies", "content": "Several companies share this name."}]
+        return [
+            {
+                "url": "https://example.com/company",
+                "title": "Acme companies",
+                "content": "Several companies share this name.",
+            }
+        ]
 
     async def complete(self, messages, tools=None):
-        return {"content": json.dumps({"company": {"name": "Acme", "identity_confidence": "low", "identity_source_ids": ["S1"]}, "queries": ["risk"], "clarification_question": "Which country and website?"})}
+        return {
+            "content": json.dumps(
+                {
+                    "company": {
+                        "name": "Acme",
+                        "identity_confidence": "low",
+                        "identity_source_ids": ["S1"],
+                    },
+                    "queries": ["risk"],
+                    "clarification_question": "Which country and website?",
+                }
+            )
+        }
 
     monkeypatch.setattr(SearchClient, "search", search)
     monkeypatch.setattr(ModelClient, "complete", complete)
@@ -153,30 +273,77 @@ def test_research_follows_evidenced_red_flag_and_filters_fake_citations(monkeypa
     async def search(self, query):
         searches.append(query)
         n = len(searches)
-        return [{"url": f"https://example.com/source{n}_{i}", "title": f"Source {n}/{i}", "content": f"Evidence about Acme Rail number {n}/{i}", "published_date": "2026-10-01"} for i in range(1, 5)]
+        return [
+            {
+                "url": f"https://example.com/source{n}_{i}",
+                "title": f"Source {n}/{i}",
+                "content": f"Evidence about Acme Rail number {n}/{i}",
+                "published_date": "2026-10-01",
+            }
+            for i in range(1, 5)
+        ]
 
     async def extract(self, urls):
         extractions.append(urls)
-        return {"results": [{"url": url, "raw_content": f"Detailed evidence about Acme Rail at {url}"} for url in urls]}
+        return {
+            "results": [
+                {"url": url, "raw_content": f"Detailed evidence about Acme Rail at {url}"}
+                for url in urls
+            ]
+        }
 
     async def complete(self, messages, tools=None):
         nonlocal model_calls
         model_calls += 1
         if model_calls == 1:
-            answer = {"company": {"name": "Acme Rail GmbH", "website": "https://example.com/source1_1", "country": "Germany", "identity_confidence": "high", "identity_source_ids": ["S1"]}, "queries": ["financial stability", "quality recalls"]}
+            answer = {
+                "company": {
+                    "name": "Acme Rail GmbH",
+                    "website": "https://example.com/source1_1",
+                    "country": "Germany",
+                    "identity_confidence": "high",
+                    "identity_source_ids": ["S1"],
+                },
+                "queries": ["financial stability", "quality recalls"],
+            }
         elif model_calls == 2:
-            answer = {"red_flags": [{"category": "quality", "severity": "high", "claim": "Historic recall needs follow-up", "source_ids": ["S9"]}], "follow_up_query": "recall resolution status"}
+            answer = {
+                "red_flags": [
+                    {
+                        "category": "quality",
+                        "severity": "high",
+                        "claim": "Historic recall needs follow-up",
+                        "source_ids": ["S9"],
+                    }
+                ],
+                "follow_up_query": "recall resolution status",
+            }
         else:
-            answer = {"findings": [
-                {"category": "quality", "severity": "unknown", "claim": "A historic recall requires review of the resolution report.", "source_ids": ["S9", "S13"]},
-                {"category": "financial", "severity": "critical", "claim": "Invented bankruptcy", "source_ids": ["S999"]},
-            ], "limitations": []}
+            answer = {
+                "findings": [
+                    {
+                        "category": "quality",
+                        "severity": "unknown",
+                        "claim": "A historic recall requires review of the resolution report.",
+                        "source_ids": ["S9", "S13"],
+                    },
+                    {
+                        "category": "financial",
+                        "severity": "critical",
+                        "claim": "Invented bankruptcy",
+                        "source_ids": ["S999"],
+                    },
+                ],
+                "limitations": [],
+            }
         return {"content": json.dumps(answer)}
 
     monkeypatch.setattr(SearchClient, "search", search)
     monkeypatch.setattr(SearchClient, "extract", extract)
     monkeypatch.setattr(ModelClient, "complete", complete)
-    response = client.post("/api/research", json={"company_name": "Acme Rail", "country": "Germany"})
+    response = client.post(
+        "/api/research", json={"company_name": "Acme Rail", "country": "Germany"}
+    )
     assert response.status_code == 200
     report = response.json()
     assert len(searches) == 4 and len(extractions) == 2 and model_calls == 3
@@ -213,7 +380,12 @@ def test_partial_research_keeps_available_evidence_when_one_search_fails(monkeyp
         searches += 1
         if searches == 2:
             raise ServiceError("Search provider rate limit reached.", 503)
-        return [{"url": f"https://example.com/source{searches}", "content": f"Company evidence {searches}"}]
+        return [
+            {
+                "url": f"https://example.com/source{searches}",
+                "content": f"Company evidence {searches}",
+            }
+        ]
 
     async def extract(self, urls):
         raise ServiceError("Page extraction provider timed out.", 504)
@@ -222,11 +394,27 @@ def test_partial_research_keeps_available_evidence_when_one_search_fails(monkeyp
         nonlocal model_calls
         model_calls += 1
         if model_calls == 1:
-            answer = {"company": {"name": "Acme Rail", "identity_confidence": "medium", "identity_source_ids": ["S1"]}, "queries": ["financial", "quality"]}
+            answer = {
+                "company": {
+                    "name": "Acme Rail",
+                    "identity_confidence": "medium",
+                    "identity_source_ids": ["S1"],
+                },
+                "queries": ["financial", "quality"],
+            }
         elif model_calls == 2:
             answer = {"red_flags": []}
         else:
-            answer = {"findings": [{"category": "operational", "severity": "unknown", "claim": "Limited operational evidence is available.", "source_ids": ["S2"]}]}
+            answer = {
+                "findings": [
+                    {
+                        "category": "operational",
+                        "severity": "unknown",
+                        "claim": "Limited operational evidence is available.",
+                        "source_ids": ["S2"],
+                    }
+                ]
+            }
         return {"content": json.dumps(answer)}
 
     monkeypatch.setattr(SearchClient, "search", search)
@@ -249,24 +437,48 @@ def test_model_adapter_sends_native_tools_and_provider_options():
             assert body["model"] == "test-nemotron" and body["tool_choice"] == "auto"
             assert body["tools"][0]["function"]["name"] == "get_supplier"
             assert body["chat_template_kwargs"]["enable_thinking"] is False
-            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": '{"answer":"ok"}'}}]})
-        settings = Settings(llm_api_key="test-key", llm_base_url="https://model.example.com/v1/", llm_model="test-nemotron", llm_extra_body='{"chat_template_kwargs":{"enable_thinking":false}}')
-        async with httpx.AsyncClient(transport=httpx.MockTransport(respond), trust_env=False) as http:
+            return httpx.Response(
+                200,
+                json={
+                    "choices": [
+                        {"finish_reason": "stop", "message": {"content": '{"answer":"ok"}'}}
+                    ]
+                },
+            )
+
+        settings = Settings(
+            llm_api_key="test-key",
+            llm_base_url="https://model.example.com/v1/",
+            llm_model="test-nemotron",
+            llm_extra_body='{"chat_template_kwargs":{"enable_thinking":false}}',
+        )
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(respond), trust_env=False
+        ) as http:
             from app.tools import tool_schemas
-            message = await ModelClient(settings, http).complete([{"role": "user", "content": "Compare"}], tool_schemas())
+
+            message = await ModelClient(settings, http).complete(
+                [{"role": "user", "content": "Compare"}], tool_schemas()
+            )
         assert message["content"] == '{"answer":"ok"}'
+
     asyncio.run(run())
 
 
 @pytest.mark.parametrize("status,expected", [(401, 503), (429, 503), (500, 502)])
 def test_upstream_errors_are_clear_and_do_not_echo_secrets(status, expected):
     async def run():
-        transport = httpx.MockTransport(lambda request: httpx.Response(status, json={"error": "PRIVATE-UPSTREAM-CONTENT"}))
+        transport = httpx.MockTransport(
+            lambda request: httpx.Response(status, json={"error": "PRIVATE-UPSTREAM-CONTENT"})
+        )
         async with httpx.AsyncClient(transport=transport, trust_env=False) as http:
             with pytest.raises(ServiceError) as caught:
-                await post_json(http, "https://api.example.com/test", "PRIVATE-KEY", {}, "Model provider")
+                await post_json(
+                    http, "https://api.example.com/test", "PRIVATE-KEY", {}, "Model provider"
+                )
         assert caught.value.status_code == expected
         assert "PRIVATE" not in str(caught.value)
+
     asyncio.run(run())
 
 
@@ -274,8 +486,14 @@ def test_http_timeout_is_returned_as_gateway_timeout():
     async def run():
         def timeout(request):
             raise httpx.ReadTimeout("upstream timeout", request=request)
-        async with httpx.AsyncClient(transport=httpx.MockTransport(timeout), trust_env=False) as http:
+
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(timeout), trust_env=False
+        ) as http:
             with pytest.raises(ServiceError) as caught:
-                await post_json(http, "https://api.example.com/test", "PRIVATE-KEY", {}, "Model provider")
+                await post_json(
+                    http, "https://api.example.com/test", "PRIVATE-KEY", {}, "Model provider"
+                )
             assert caught.value.status_code == 504
+
     asyncio.run(run())
