@@ -159,6 +159,14 @@ The GitHub workflow in `.github/workflows/verify.yml` runs linting, tests, contr
 
 ## Jury access and deployment
 
+The repository includes a [Render Docker Blueprint](render.yaml) for one Free-plan
+web service with the verified Nemotron settings, required jury login and health
+checks. [Deploy to Render](https://render.com/deploy?repo=https://github.com/GeekNandy/Supplier-Risk-Intelligence)
+and provide the private model/search keys and jury password. Follow the
+[deployment guide](docs/DEPLOYMENT.md#render-deployment) for account connection,
+CI-based updates and the required public-URL checks. A committed Blueprint does
+not mean a live hosted service has been created.
+
 Configure jury access in your own terminal:
 
 ```bash

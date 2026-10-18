@@ -4,6 +4,43 @@ The app runs as one Python service serving `/api/*` plus the built React fronten
 Original CSV and criteria assets must be present under the app root. No database,
 local model server, NVIDIA GPU, n8n or Devin account is required.
 
+## Render deployment
+
+The root `render.yaml` defines one Docker web service in Frankfurt on the Free
+compute plan. It serves both the React UI and Python API, uses `/api/ready` for
+health checks, requires live AI and jury authentication, and follows `main` after
+its CI checks pass. No database or persistent disk is created.
+
+[Deploy this repository to Render](https://render.com/deploy?repo=https://github.com/GeekNandy/Supplier-Risk-Intelligence)
+
+1. Sign in to your Render account and select the deployment workspace. The app
+   cannot create a hosted service until that account is connected.
+2. Use the link above, review the service and keep the `free` plan. If creating
+   the service manually, choose a Docker Web Service from this repository's
+   `main` branch, with repository-root build context and `./Dockerfile`.
+3. Supply the three private values requested by the Blueprint: `LLM_API_KEY`,
+   `TAVILY_API_KEY` and `JURY_PASSWORD`. The other model/auth settings are already
+   declared. If using the deployment workspace's generated jury credentials,
+   read them locally from its private `.env`; never commit that file.
+4. Create the service and wait for its initial deploy to become Live. The actual
+   service URL is assigned by Render; do not assume it from the display name.
+5. Run the final submission check below against the returned HTTPS URL. Open
+   the URL in a fresh browser session and sign in as `jury` using the configured
+   password.
+
+For automatic updates, connect the repository to Render and leave auto-deploys
+set to **After CI Checks Pass**. Ekaterina's UI changes then deploy after merging
+to `main` and passing the existing workflow. The Blueprint is intended for this
+team-owned service; a separate fork/clone should review its linked repository
+and update policy before creating an instance.
+
+The Free plan spins down after 15 minutes without requests and can take about a
+minute to wake up. Open the app before recording or presenting. Keep the Free
+plan unless the team explicitly chooses a paid instance. Current provider docs:
+[Blueprint fields](https://render.com/docs/blueprint-spec),
+[Free plan behavior](https://render.com/docs/free), and
+[deploy button](https://render.com/docs/deploy-to-render).
+
 ## Local environment
 
 From the repository root, activate your virtual environment and install dependencies:
@@ -39,7 +76,7 @@ Live calls consume provider credits; local tests and the production smoke do not
 ## Docker host
 
 Choose a host that accepts a Dockerfile, build from the repository root, select
-`feature-sharad` until it is merged, and expose the service's `PORT` (default 8000).
+`main`, and expose the service's `PORT` (default 8000; the Render Blueprint uses 10000).
 The host must support outbound HTTPS to the selected model API and `api.tavily.com`.
 
 ```bash
@@ -52,9 +89,9 @@ Set these secrets/settings in the host dashboard:
 | Setting | Value |
 |---|---|
 | `LLM_API_KEY` | Your model API key |
-| `LLM_BASE_URL` | Exact API prefix from your sponsor account/region |
-| `LLM_MODEL` | Exact available Nemotron model ID |
-| `LLM_EXTRA_BODY` | `{}` initially; only documented provider options |
+| `LLM_BASE_URL` | `https://api.tokenfactory.nebius.com/v1/` for the verified account |
+| `LLM_MODEL` | `nvidia/Nemotron-3.5-Super-VL` |
+| `LLM_EXTRA_BODY` | `{"chat_template_kwargs":{"enable_thinking":false}}` for this model |
 | `TAVILY_API_KEY` | Your Tavily key |
 | `JURY_USERNAME` | Chosen jury username |
 | `JURY_PASSWORD` | Chosen password, at least 12 characters |
