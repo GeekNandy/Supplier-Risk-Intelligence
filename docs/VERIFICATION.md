@@ -18,7 +18,8 @@ the existing npm lockfile for the frontend.
 | Real HTTP production smoke | Passed from a separate working directory |
 | Live Tavily Search and Extract | Passed through the backend's actual SearchClient: four search results and one extracted Siemens source page |
 | Tavily remote MCP | Initialization, authenticated tool discovery and a live `tavily_search` call passed |
-| Live Nemotron/full research workflow | Not run; the model API key is still required |
+| Live Nemotron 3.5 Super VL chat | Both challenge questions passed through real HTTP endpoints with supplier tools and verified evidence |
+| Live Nemotron/Tavily research | Siemens report returned nine findings with valid source references from thirteen sources in 30.4 seconds; partial status retained for evidence gaps |
 | Docker image | GitHub Actions build and in-container HTTP smoke passed as the non-root runtime user |
 
 Both [push verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122070804)
@@ -29,10 +30,20 @@ clean-wheel smoke, and Docker build/smoke. Local checks used Node 24; the hosted
 checks also verified the supported Node 22 setup. No local Docker engine was
 available, so the actual image check ran on GitHub's runner.
 
-Tavily was subsequently verified with the supplied credential in this workspace.
-The key is stored only in a gitignored, owner-readable `.env`; it is not part of
+Tavily and Nemotron were subsequently verified with supplied credentials in this workspace.
+The keys are stored only in a gitignored, owner-readable `.env`; they are not part of
 the repository or deployment. MCP was verified through direct protocol calls;
 this does not register native Tavily tools in the current ChatGPT session.
+
+The live model configuration is `https://api.tokenfactory.nebius.com/v1/` with
+`nvidia/Nemotron-3.5-Super-VL` and
+`LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}`. The initial
+research report hit the model's output limit with optional thinking enabled.
+After disabling it, both supplier questions and report generation passed. The
+financial comparison completed in 7.2 seconds and the risk explanation in 8.2 seconds.
+The research check confirmed nonempty findings, completed report generation and
+source references belonging to the retrieved source set. Publication-date gaps,
+historical evidence and limited independent coverage remain visible in the report.
 
 The HTTP smoke starts Uvicorn using the installed wheel, checks readiness with
 10,000 suppliers, checks unauthorized/authorized jury access, serves the built
@@ -45,9 +56,9 @@ Provider integration tests use HTTPX transport stubs while running the actual
 model/search adapters and FastAPI orchestration. They check native tool payloads,
 server-derived evidence and rankings, research search/extraction/report payloads,
 source retention after provider failures, and safe error messages. They verify
-the implementation contract. Live Tavily search/extraction access is verified
-above; Nemotron access, model behavior and the deployed end-to-end workflow still
-need a credential-backed smoke test.
+the implementation contract. Live Tavily search/extraction and Nemotron orchestration
+were separately verified above. The deployed end-to-end workflow still needs the
+same credential-backed smoke test after deployment.
 
 The suite also covers ties, missing scores, invalid datasets, maximum selection
 size, pagination, unknown fields/IDs, malformed JSON, invalid URLs, streamed body
@@ -83,7 +94,7 @@ wheel or container smoke check. Before submission, run:
 python scripts/smoke_ai.py --api-url https://YOUR-HOST --require-live --research "Siemens AG" --country Germany --website https://www.siemens.com --jury-user jury
 ```
 
-The jury password is prompted without echoing. The live URL, model-backed provider
-verification, demo polish and recording remain team delivery
+The jury password is prompted without echoing. The live URL, deployed smoke test,
+demo polish and recording remain team delivery
 work. The comparison/research results need source review; reference validation does
 not prove every model-generated semantic interpretation.

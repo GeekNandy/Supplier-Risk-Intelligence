@@ -50,7 +50,7 @@ For an interactive setup with hidden key prompts:
 python scripts/configure_ai.py
 ```
 
-Create your provider keys first; follow [the detailed external-services setup guide](docs/EXTERNAL_SETUP.md). The command preserves unrelated `.env` settings and lets you keep existing keys by pressing Enter. It configures the local app; it does not create provider accounts, redeem credits or verify access. Its Nemotron Super defaults match the official Nebius US-region example; replace them if your dashboard's model example uses a different region/model ID.
+Create your provider keys first; follow [the detailed external-services setup guide](docs/EXTERNAL_SETUP.md). The command preserves unrelated `.env` settings and lets you keep existing keys by pressing Enter. It configures the local app; it does not create provider accounts, redeem credits or verify access. The wizard starts with the older Nemotron 3 Super example; enter the endpoint and model below to use the live-verified Nemotron 3.5 Super VL configuration.
 
 For manual configuration instead, use the following values.
 
@@ -59,12 +59,12 @@ Edit the repository-root `.env` locally:
 ```dotenv
 LLM_API_KEY=your_token_factory_api_key
 LLM_BASE_URL=https://api.tokenfactory.nebius.com/v1/
-LLM_MODEL=copy_the_exact_nemotron_model_id_from_your_dashboard
+LLM_MODEL=nvidia/Nemotron-3.5-Super-VL
 TAVILY_API_KEY=your_tavily_api_key
-LLM_EXTRA_BODY={}
+LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}
 ```
 
-Use the exact regional base URL and model ID offered by the sponsor account. The base URL must be the API prefix (usually ending in `/v1/`), not the `/chat/completions` endpoint itself. Provider-specific options can be passed through `LLM_EXTRA_BODY`; for a model that supports it, `{"chat_template_kwargs":{"enable_thinking":false}}` can reduce interactive latency. Follow the selected model's provider documentation.
+This exact configuration passed live supplier chat and Siemens company research on 18 October 2026. Disabling optional thinking prevented the longer report from exhausting its output budget. If selecting another model, use its exact endpoint, model ID and supported options; `LLM_EXTRA_BODY` is provider-specific. The base URL must be the API prefix (usually ending in `/v1/`), not the `/chat/completions` endpoint itself.
 
 Restart Python after changing `.env`. `GET /api/status` reports configuration flags without returning secrets. Without `LLM_API_KEY`, chat supports the two challenge examples in explicitly labelled `data_only` mode. Research requires the model configuration and Tavily key. A configured provider failure is returned as an error, rather than silently being relabelled as a successful model response.
 

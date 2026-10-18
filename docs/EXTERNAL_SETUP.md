@@ -8,18 +8,21 @@ The integration code is already implemented. You need two hosted service account
 2. Follow the hackathon's participant-resource instructions if supplied. The credits listed in the challenge prizes are not proof that your account already has that balance. Ask the Nebius mentor which participant code/project to use.
 3. Current general billing documentation says new onboarding requires a billing account/card. Check the event's sponsored access instructions before using personal billing. If you received a promo code, apply it via the balance menu → Top up → With promo code, then verify the resulting balance.
 4. Open the API keys section: https://tokenfactory.nebius.com/project/api-keys . Click **Create API key**, name it `supplier-risk-hackathon`, click **Create**, and save the displayed key privately. The provider documentation says it cannot be viewed again after creation.
-5. In Models, search for **Nemotron 3 Super** and open its playground. Use a public/hosted endpoint.
+5. In Models, search for **Nemotron 3.5 Super VL** and open its playground. Use a public/hosted endpoint. Separate embedder or reranker deployments are not required by this app.
 6. Send a short test such as `Reply with OK.`. Confirm that the provider can generate a response before debugging the local app.
 7. Click **View code** in the playground and note the exact `base_url` and `model`. Those two strings are public configuration; the API key is secret.
 
-The official Nebius Super example currently pairs:
+The following settings were verified with live backend calls on 18 October 2026:
 
 ```dotenv
-LLM_BASE_URL=https://api.tokenfactory.us-central1.nebius.com/v1/
-LLM_MODEL=nvidia/nemotron-3-super-120b-a12b
+LLM_BASE_URL=https://api.tokenfactory.nebius.com/v1/
+LLM_MODEL=nvidia/Nemotron-3.5-Super-VL
+LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}
 ```
 
-Prefer the pair shown by your own account/region. Model IDs and base URLs must match the provider's example; preserve case. Keep only the API prefix, not `/chat/completions`, in `LLM_BASE_URL`.
+The model ID was returned by the account's `/v1/models` catalog. Both challenge questions passed with real supplier-tool calls. Siemens research returned nine cited findings from thirteen sources in about thirty seconds. It retained a partial status because of evidence and publication-date limitations. Optional thinking is disabled because the first report attempt reached the output limit with it enabled.
+
+Prefer the pair shown by your own account/region if different. Model IDs and base URLs must match the provider's example; preserve case. Keep only the API prefix, not `/chat/completions`, in `LLM_BASE_URL`. The optional thinking setting is specific to compatible models.
 
 ## 2. Tavily: public-source search and extraction
 
@@ -35,7 +38,7 @@ Run these commands from the repository root, in a macOS/Linux terminal. Python 3
 
 ```bash
 git fetch origin
-git switch feature-sharad
+git switch integration-ui-backend
 git pull --ff-only
 python3 -m venv .venv
 source .venv/bin/activate
@@ -46,12 +49,14 @@ python scripts/configure_ai.py
 
 In the setup command:
 
-1. Press Enter for the displayed model base URL if it matches the playground's View code; otherwise paste the correct URL.
-2. Press Enter for the model ID if it matches; otherwise paste the exact ID.
+1. Enter `https://api.tokenfactory.nebius.com/v1/` for the model base URL, or your account's different endpoint. The wizard initially offers the older US-region example.
+2. Enter `nvidia/Nemotron-3.5-Super-VL` for the model ID, preserving case.
 3. Paste your Nebius API key into its hidden prompt and press Enter.
 4. Paste your Tavily API key into its hidden prompt and press Enter.
 
 The terminal will not display the keys as you paste them. Settings are saved in the repository-root `.env`; existing unrelated settings are preserved. `.env` is excluded from Git. Do not paste keys into chat, README files or frontend code.
+
+In `.env`, set `LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}` for the verified Nemotron configuration. Copy the same settings into the deployed backend's environment variables; cloning the repository does not copy private keys.
 
 ## 4. Start and verify
 
@@ -105,5 +110,6 @@ When asking for help, share the error text and public model/base URL only. Do no
 - [Nebius API key creation](https://docs.tokenfactory.nebius.com/api-reference/introduction)
 - [Nebius billing and promo codes](https://docs.tokenfactory.nebius.com/other-capabilities/billing-new)
 - [Nebius playground and View code](https://docs.tokenfactory.nebius.com/ai-models-inference/playground)
-- [Official Nemotron Super example](https://github.com/nebius/token-factory-cookbook/blob/main/models/nemotron/nemotron3-super-120B.md)
+- [Nebius Nemotron 3.5 Super VL announcement](https://nebius.com/blog/posts/three-new-open-weight-models-from-us-companies-give-builders-more-choice)
+- [NVIDIA Nemotron 3.5 Super VL request settings](https://docs.nvidia.com/nim/large-language-models/latest/get-started/advanced/get-started-nemotron-3.5-super-vl.html#control-reasoning)
 - [Tavily quickstart](https://docs.tavily.com/documentation/quickstart)
