@@ -9,7 +9,7 @@ the existing npm lockfile for the frontend.
 | Check | Result |
 |---|---|
 | Backend suite | 94 tests, including malformed/schema-invalid/truncated research reports, concurrent AI capacity and usage accounting |
-| Browser integration suite | 16 tests passed against the integrated UI and a real Python server |
+| Browser integration suite | 18 tests passed against the refined UI and a real Python server |
 | Ruff lint and format checks | Passed |
 | Generated OpenAPI snapshot | Matches running backend schemas |
 | Python source distribution and wheel | Built successfully |
@@ -36,6 +36,20 @@ GitHub app was then connected with access to only this repository. Commit
 [main checks passed](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39133260611).
 Automatic updates are now connected; future UI/backend PRs deploy after merging
 and passing `main` CI.
+
+## Current release and submission verification
+
+The refined application on `main`, commit `59eedec9494c405a4da15086a1d9434f910384bb`, passed [main CI](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39139316985). Render deploy `dep-dbae43jrjlhs73cgrs70` is live from that exact commit with a `new_commit` trigger. The service follows the repository's `main` branch with the `checksPass` auto-deploy policy. Both owners' application work is integrated; there were no open pull requests at the submission review.
+
+HTTPS checks repeated on 18 October 2026 confirmed:
+
+- Public `/api/ready` returns 200 with 10,000 suppliers, jury authentication enabled and live AI configured.
+- Anonymous access to the application returns 401.
+- The configured jury credentials return 200 for the application, both built assets, `/api/status`, `/api/docs` and a supplier-list request.
+- `/api/status` reports live chat, research configuration and `nvidia/Nemotron-3.5-Super-VL`. Configuration status alone does not make a new paid inference request.
+- The private jury access note contains the currently configured password. Distribution to judges still requires the team's private submission handoff; the password is absent from the public repository.
+
+The refined UI was also checked in a fresh hosted browser session before the recording: twenty-supplier comparison, live Nemotron chat, cited Knorr-Bremse research and mobile profiles completed without browser page errors. The original served CSV matched its source SHA-256. Research returned a partial report with evidence limitations retained. Historical verification entries below describe earlier commits and runs; the final video URL is not yet available in the repository.
 
 ## Performance and cost checks
 

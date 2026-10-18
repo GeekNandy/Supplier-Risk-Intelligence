@@ -3,8 +3,15 @@
 Siemens hackathon project: explore and compare supplier risk, ask grounded questions, and research real companies with cited evidence.
 
 **Live app:** [Supplier Risk Intelligence](https://supplier-risk-intelligence-qghi.onrender.com)
-— sign in as `jury` using the password shared privately with the team. The same
-service hosts the UI and API; `/api/docs` requires that login too.
+— sign in as `jury` using the password supplied separately in the submission's
+judge access details. The browser displays a native login prompt. The same
+service hosts the UI and API; `/api/docs` requires that login too. Allow about a
+minute for the Free service to wake after inactivity.
+
+**Judges: start with the [evaluation guide](docs/JUDGES.md)** for challenge
+coverage, example questions, research inputs, evidence limitations and technical
+documentation. All application code is integrated into `main`, the branch used
+by the live service. The final two-minute video link is still pending.
 
 ## Stack
 
@@ -18,7 +25,7 @@ Python 3.11+ / FastAPI, React / TypeScript / Vite, Tailwind CSS. Nemotron via a 
 | **Ekaterina** | UI/demo PRs from `main` | `frontend/`, explorer, comparison heatmap, chat/research views, demo presentation | Review the integrated buyer journey, polish the demo and record the walkthrough |
 | **Both** | Pull requests into `main` | Deployment, jury access and submission | Review the hosted buyer journey and submit repository/video/access details |
 
-The integrated app includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The backend has 94 regression checks; CI also runs 16 browser integration checks. Start further work from current `main`; both original feature branches remain available for history.
+The integrated app includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The backend has 94 regression checks; CI also runs 18 browser integration checks. Start further work from current `main`; both original feature branches remain available for history.
 
 Sharad edits backend files and documentation; Ekaterina edits frontend files. Do not commit API keys. Work through separate branches based on current `main`.
 
@@ -138,7 +145,7 @@ Chat allows at most four model calls and eight supplier tool invocations within 
 
 ## Reliability, performance and AI cost
 
-Python computes supplier scores, comparisons and the decision memo without model calls. Supplier metadata and an ID index are cached for the loaded dataset; restart the process after replacing the CSV or criteria file. Reports remain fresh per request. We do not reuse an old company-risk answer as current evidence.
+Supplier scores are supplied by the dataset. The UI calculates comparisons and copyable summaries in the browser; the API and chatbot tools calculate comparisons in Python. These operations require no model calls. Supplier metadata and an ID index are cached for the loaded dataset; restart the process after replacing the CSV or criteria file. Reports remain fresh per request. We do not reuse an old company-risk answer as current evidence.
 
 Research prompts remove duplicated excerpts and retrieval dates, preserve every source ID, and cap source text at 36,000 characters overall and 3,000 per source. Shortened excerpts are labelled in the model context and disclosed in report limitations. The JSON schema is supplied once through the provider response format. Nemotron's optional thinking is disabled in the verified configuration.
 
@@ -215,10 +222,12 @@ For local production verification without Docker, build `frontend`, then restart
 
 - [x] Core explorer, 20-supplier comparison, grounded chatbot and research workflow complete.
 - [x] Repository contains all code/data and reproducible setup instructions.
-- [ ] Deployed URL verified from a fresh browser session.
+- [x] Deployed URL verified from a fresh browser session.
 - [x] Jury login and credentials verified over HTTPS.
 - [ ] Two-minute video: filter → compare three suppliers → ask a risk question → research a real company.
 - [x] README updated with the live app URL.
+- [x] Judge evaluation guide and technical documentation linked from the README.
+- [ ] Include the working jury username and password in private submission access details or deliver them directly to the organizers; a README reference alone does not deliver the password.
 - [ ] README updated with the final video link.
 
 Submission deadline supplied by the organizers: **18:30 Berlin time, 18 October 2026**. Reserve time for the deployed walkthrough and video upload.
@@ -227,8 +236,12 @@ Submission deadline supplied by the organizers: **18:30 Berlin time, 18 October 
 
 - [FastAPI](https://fastapi.tiangolo.com/), [Pydantic](https://docs.pydantic.dev/latest/), [HTTPX](https://www.python-httpx.org/), [Uvicorn](https://www.uvicorn.org/)
 - [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/docs/), [Vite](https://vite.dev/guide/), [Tailwind CSS](https://tailwindcss.com/docs/installation/using-vite)
+- [Siemens iX](https://ix.siemens.io/), [Recharts](https://recharts.org/), [Papa Parse](https://www.papaparse.com/), [Playwright](https://playwright.dev/)
 - [Nemotron on Nebius Token Factory](https://nebius.com/services/token-factory/models/nvidia-nemotron-models-inference), [structured output](https://docs.tokenfactory.nebius.com/ai-models-inference/json)
 - [Tavily Search](https://docs.tavily.com/documentation/api-reference/endpoint/search), [Tavily Extract](https://docs.tavily.com/documentation/api-reference/endpoint/extract)
+- [Render deployment](docs/DEPLOYMENT.md), [GitHub Actions verification](.github/workflows/verify.yml)
+
+Exact frontend dependencies are in [package.json](frontend/package.json) and its lockfile. Backend dependencies are in [pyproject.toml](backend/pyproject.toml) and the [runtime lockfile](backend/requirements.lock). The [API contract](docs/API.md) and [OpenAPI snapshot](docs/openapi.json) document every implemented endpoint.
 
 Prioritize the Siemens buyer journey and meaningful Nemotron use. Hugging Face participation follows its separate application process. n8n and Devin integrations remain optional stretch work after the core demo is complete.
 
