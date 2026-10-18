@@ -8,6 +8,8 @@ from urllib.parse import urlsplit
 
 import httpx
 
+from app.ai_runtime import record_call, record_model_usage
+
 
 class ServiceError(Exception):
     def __init__(self, message: str, status_code: int = 502):
@@ -157,6 +159,7 @@ class ModelClient:
                 "type": "json_schema",
                 "json_schema": {"name": "response", "schema": response_schema},
             }
+        record_call("model")
         result = await post_json(
             self.client,
             base + "/chat/completions",
@@ -164,6 +167,7 @@ class ModelClient:
             payload,
             "Model provider",
         )
+        record_model_usage(result.get("usage"))
         try:
             choice = result["choices"][0]
             message = choice["message"]
@@ -189,6 +193,7 @@ class SearchClient:
         self.settings, self.client = settings, client
 
     async def search(self, query: str) -> list[dict]:
+        record_call("search")
         result = await post_json(
             self.client,
             "https://api.tavily.com/search",
@@ -209,6 +214,7 @@ class SearchClient:
         return [row for row in rows[:4] if isinstance(row, dict)]
 
     async def extract(self, urls: list[str]) -> dict:
+        record_call("extract")
         return await post_json(
             self.client,
             "https://api.tavily.com/extract",

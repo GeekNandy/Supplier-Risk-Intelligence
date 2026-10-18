@@ -3,8 +3,11 @@
 import csv
 import math
 import os
+from copy import deepcopy
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from threading import Lock
 
 from app.runtime import ROOT
 
@@ -62,8 +65,7 @@ def suppliers() -> tuple[dict, ...]:
     return rows
 
 
-def metadata() -> dict:
-    rows = suppliers()
+def build_metadata(rows: tuple[dict, ...]) -> dict:
     columns = list(rows[0]) if rows else []
     numeric_fields = [
         field
@@ -87,6 +89,39 @@ def metadata() -> dict:
         "score_direction": "All supplied risk scores: 0 = no risk, 100 = maximum risk. Operational percentages have their own semantics.",
         "total_risk_note": "The supplied index is a weighted average. Category weights are not provided; exact contributions cannot be reconstructed.",
     }
+
+
+@dataclass
+class DatasetSnapshot:
+    rows: tuple[dict, ...]
+    criteria_path: Path
+    metadata: dict
+    by_id: dict[str, dict]
+
+
+_snapshot: DatasetSnapshot | None = None
+_snapshot_lock = Lock()
+
+
+def snapshot() -> DatasetSnapshot:
+    """Derived data follows the loaded CSV snapshot, including after cache_clear()."""
+    global _snapshot
+    rows = suppliers()
+    with _snapshot_lock:
+        if (
+            _snapshot is None
+            or _snapshot.rows is not rows
+            or _snapshot.criteria_path != CRITERIA_PATH
+        ):
+            _snapshot = DatasetSnapshot(
+                rows, CRITERIA_PATH, build_metadata(rows), {row["supplierID"]: row for row in rows}
+            )
+        return _snapshot
+
+
+def metadata() -> dict:
+    # A caller may change its response without corrupting later requests.
+    return deepcopy(snapshot().metadata)
 
 
 def search_suppliers(
@@ -134,10 +169,7 @@ def search_suppliers(
 
 
 def get_supplier(supplier_id: str) -> dict:
-    for row in suppliers():
-        if row["supplierID"] == supplier_id:
-            return row
-    raise KeyError(supplier_id)
+    return snapshot().by_id[supplier_id]
 
 
 def compare_suppliers(supplier_ids: list[str], rank_by: str = "Total_Risk_Index") -> dict:

@@ -1,13 +1,14 @@
 import os
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 
 from app import data
 from app.access import AccessMiddleware, jury_access
+from app.ai_runtime import CapacityError, ai_request
 from app.chat import answer_question
 from app.models import (
     ChatRequest,
@@ -147,9 +148,17 @@ def compare(request: CompareRequest):
     return data_call(data.compare_suppliers, request.supplier_ids, request.rank_by)
 
 
-async def ai_call(function, request):
+async def ai_call(function, request, response: Response):
     try:
-        return await function(request)
+        with ai_request() as usage:
+            try:
+                return await function(request)
+            finally:
+                response.headers.update(usage.headers())
+    except CapacityError:
+        raise HTTPException(
+            429, "AI is busy. Please retry shortly.", headers={"Retry-After": "5"}
+        ) from None
     except ServiceError as error:
         raise HTTPException(error.status_code, str(error)) from None
     except (OSError, data.DatasetError):
@@ -163,13 +172,13 @@ async def ai_call(function, request):
 
 
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    return await ai_call(answer_question, request)
+async def chat(request: ChatRequest, response: Response):
+    return await ai_call(answer_question, request, response)
 
 
 @app.post("/api/research", response_model=ResearchResponse)
-async def research(request: ResearchRequest):
-    return await ai_call(research_company, request)
+async def research(request: ResearchRequest, response: Response):
+    return await ai_call(research_company, request, response)
 
 
 # After `npm run build`, one Python process can also serve the frontend.
