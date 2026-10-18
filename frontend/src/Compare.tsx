@@ -2,11 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { api, type Comparison, type Metadata, type Supplier } from './api';
 import { fieldLabel, formatValue, levelOf, levelStyle, OPERATIONAL_FIELDS } from './format';
 import type { Shortlist } from './shortlist';
-import { Card, ErrorBox, inputClass, LevelBadge, primaryButton, secondaryButton, Spinner } from './ui';
+import { Card, ErrorBox, inputClass, LevelBadge, primaryButton, secondaryButton, Spinner, Tip, defId } from './ui';
+import { useWorkspace } from './workspace';
+
+/** Shortlist question for the chosen metric; keywords match the data-only mode's supported criteria. */
+export function shortlistQuestion(field: string): string {
+  if (field === 'Total_Risk_Index') return 'Which of my shortlisted suppliers has the lowest overall risk?';
+  if (field === 'Digital_Security_Score') return 'Which of my shortlisted suppliers has the lowest cyber (digital security) risk?';
+  return `Which of my shortlisted suppliers has the lowest ${fieldLabel(field).toLowerCase()} risk?`;
+}
 
 const numberOrNull = (value: unknown) => (typeof value === 'number' ? value : null);
 
-export default function Compare({ meta, shortlist, onExplore, onAsk }: { meta: Metadata; shortlist: Shortlist; onExplore: () => void; onAsk: () => void }) {
+export default function Compare({ meta, shortlist, onExplore, onAsk }: { meta: Metadata; shortlist: Shortlist; onExplore: () => void; onAsk: (question: string) => void }) {
   const [rankBy, setRankBy] = useState('Total_Risk_Index');
   const [comparison, setComparison] = useState<Comparison>();
   const [loading, setLoading] = useState(false);
@@ -91,7 +99,8 @@ function tradeOffs(supplier: Supplier, others: Supplier[], fields: string[]): Tr
 
 const pointsHigher = (gap: number) => (gap === 0 ? 'tied' : `${gap} point${gap === 1 ? '' : 's'} higher`);
 
-function DecisionView({ comparison, onAsk }: { comparison: Comparison; onAsk: () => void }) {
+function DecisionView({ comparison, onAsk }: { comparison: Comparison; onAsk: (question: string) => void }) {
+  const { openSupplier } = useWorkspace();
   const { rank_by: field, suppliers, lowest_risk_supplier_ids: winners } = comparison;
   const ordered = orderByMetric(suppliers, field);
   const winnerRows = ordered.filter(row => winners.includes(row.supplierID));
@@ -110,7 +119,7 @@ function DecisionView({ comparison, onAsk }: { comparison: Comparison; onAsk: ()
       actions={
         <div className="flex gap-2">
           <button className={secondaryButton} onClick={copy}>{copied ? 'Copied ✓' : 'Copy justification'}</button>
-          <button className={secondaryButton} onClick={onAsk}>Ask about this shortlist →</button>
+          <button className={secondaryButton} onClick={() => onAsk(shortlistQuestion(field))} title={shortlistQuestion(field)}>Ask about this ranking →</button>
         </div>
       }
     >
@@ -125,7 +134,7 @@ function DecisionView({ comparison, onAsk }: { comparison: Comparison; onAsk: ()
             <ul className="mt-2 space-y-1.5">
               {winnerRows.map(row => (
                 <li key={row.supplierID}>
-                  <span className="font-mono text-lg font-bold text-slate-900">{row.supplierID}</span>
+                  <button onClick={() => openSupplier(row.supplierID)} className="font-mono text-lg font-bold text-slate-900 hover:text-blue-700 hover:underline">{row.supplierID}</button>
                   <span className="ml-2 text-sm text-slate-600">{row['Supplier Name']}</span>
                 </li>
               ))}
@@ -200,6 +209,7 @@ function buildMemo(comparison: Comparison): string {
 }
 
 function Heatmap({ comparison, rankBy, onRankBy, onRemove }: { comparison: Comparison; rankBy: string; onRankBy: (field: string) => void; onRemove: (id: string) => void }) {
+  const { openSupplier, describe } = useWorkspace();
   const ordered = orderByMetric(comparison.suppliers, rankBy);
   const winners = new Set(comparison.lowest_risk_supplier_ids);
   const fields = ['Total_Risk_Index', ...comparison.risk_fields.filter(field => field !== 'Total_Risk_Index')];
@@ -213,7 +223,7 @@ function Heatmap({ comparison, rankBy, onRankBy, onRemove }: { comparison: Compa
   return (
     <Card
       title="Side-by-side risk heatmap"
-      subtitle="Columns ordered by the ranking metric (lowest first). Click a metric name to rank by it."
+      subtitle="Columns ordered by the ranking metric (lowest first). Hover a metric for its definition; click it to rank by it. Click a supplier ID for its full profile."
       actions={<Legend />}
     >
       <div className="-mx-5 overflow-x-auto px-5">
@@ -224,7 +234,7 @@ function Heatmap({ comparison, rankBy, onRankBy, onRemove }: { comparison: Compa
               {ordered.map((row, index) => (
                 <th key={row.supplierID} className={`min-w-[5.5rem] rounded-t-md px-1.5 pb-2 pt-1.5 text-center align-bottom font-normal ${winners.has(row.supplierID) ? 'bg-emerald-50 ring-2 ring-emerald-500' : ''}`}>
                   <div className="text-[11px] text-slate-500">#{index + 1}{winners.has(row.supplierID) && <span className="ml-1 font-semibold text-emerald-700">Lowest</span>}</div>
-                  <div className="font-mono text-xs font-semibold text-slate-900">{row.supplierID}</div>
+                  <button onClick={() => openSupplier(row.supplierID)} className="font-mono text-xs font-semibold text-slate-900 hover:text-blue-700 hover:underline" title={`View ${row.supplierID} details`}>{row.supplierID}</button>
                   <div className="mx-auto max-w-24 truncate text-[11px] text-slate-500" title={row['Supplier Name']}>{row['Supplier Name']}</div>
                   <button className="mt-1 text-[11px] text-slate-500 underline hover:text-red-700" onClick={() => onRemove(row.supplierID)} aria-label={`Remove ${row.supplierID}`}>Remove</button>
                 </th>
@@ -238,13 +248,16 @@ function Heatmap({ comparison, rankBy, onRankBy, onRemove }: { comparison: Compa
               return (
                 <tr key={field}>
                   <th className={`${stickyHead} pr-3 text-left font-normal`}>
-                    <button
-                      onClick={() => onRankBy(field)}
-                      className={`w-full rounded px-2 py-1 text-left hover:bg-slate-100 ${active ? 'bg-blue-50 font-semibold text-blue-800 ring-1 ring-blue-300' : 'text-slate-800'} ${field === 'Total_Risk_Index' ? 'font-semibold' : ''}`}
-                      aria-pressed={active}
-                    >
-                      {fieldLabel(field)}{active && <span className="ml-1 text-xs">▲ ranking</span>}
-                    </button>
+                    <Tip id={defId(field)} text={describe(field)}>
+                      <button
+                        onClick={() => onRankBy(field)}
+                        className={`w-full rounded px-2 py-1 text-left hover:bg-slate-100 ${active ? 'bg-blue-50 font-semibold text-blue-800 ring-1 ring-blue-300' : 'text-slate-800'} ${field === 'Total_Risk_Index' ? 'font-semibold' : ''}`}
+                        aria-pressed={active}
+                        aria-describedby={describe(field) ? defId(field) : undefined}
+                      >
+                        {fieldLabel(field)}{active && <span className="ml-1 text-xs">▲ ranking</span>}
+                      </button>
+                    </Tip>
                   </th>
                   {ordered.map(row => {
                     const value = numberOrNull(row[field]);
@@ -268,7 +281,7 @@ function Heatmap({ comparison, rankBy, onRankBy, onRemove }: { comparison: Compa
             {operational.map(({ field, hint }) => (
               <tr key={field}>
                 <th className={`${stickyHead} pr-3 text-left font-normal`}>
-                  <div className="px-2 py-1"><div className="text-slate-800">{field}</div><div className="text-[11px] text-slate-500">{hint}</div></div>
+                  <Tip id={defId(field)} text={describe(field)}><div className="px-2 py-1" tabIndex={describe(field) ? 0 : undefined} aria-describedby={describe(field) ? defId(field) : undefined}><div className="text-slate-800">{field}</div><div className="text-[11px] text-slate-500">{hint}</div></div></Tip>
                 </th>
                 {ordered.map(row => (
                   <td key={row.supplierID} className="rounded bg-slate-50 px-1.5 py-1 text-center text-xs tabular-nums text-slate-800">

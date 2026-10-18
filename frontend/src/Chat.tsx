@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, type ChatResponse, type Status } from './api';
 import { fieldLabel, formatValue } from './format';
 import type { Shortlist } from './shortlist';
 import { AiError, Card, inputClass, primaryButton, secondaryButton, Spinner } from './ui';
+import { useWorkspace } from './workspace';
 
 const EXAMPLES = [
   'Which of SUPP_00012, SUPP_00450 and SUPP_00731 has the lowest financial risk?',
@@ -12,9 +13,18 @@ const EXAMPLES = [
 
 type Turn = { id: number; question: string; contextIds: string[]; response?: ChatResponse; error?: unknown };
 
-export default function Chat({ shortlist, status, onAddIds }: { shortlist: Shortlist; status: Status | null; onAddIds: (ids: string[]) => Promise<void> }) {
+export default function Chat({ shortlist, status, onAddIds, draft }: { shortlist: Shortlist; status: Status | null; onAddIds: (ids: string[]) => Promise<void>; draft?: { text: string; nonce: number } }) {
   const [message, setMessage] = useState('');
   const [useContext, setUseContext] = useState(true);
+  const input = useRef<HTMLTextAreaElement>(null);
+
+  // A question prefilled from Compare: shown for the buyer to review and send, never sent automatically.
+  useEffect(() => {
+    if (!draft) return;
+    setMessage(draft.text);
+    setUseContext(true);
+    requestAnimationFrame(() => input.current?.focus());
+  }, [draft]);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [pending, setPending] = useState(false);
 
@@ -47,6 +57,7 @@ export default function Chat({ shortlist, status, onAddIds }: { shortlist: Short
       >
         <form onSubmit={submit} className="space-y-3">
           <textarea
+            ref={input}
             className={`${inputClass} w-full`}
             rows={2}
             maxLength={4000}
@@ -93,6 +104,7 @@ function ModeBadge({ status }: { status: Status | null }) {
 function TurnView({ turn, shortlist, onAddIds, onRetry, retryDisabled }: { turn: Turn; shortlist: Shortlist; onAddIds: (ids: string[]) => Promise<void>; onRetry: () => void; retryDisabled: boolean }) {
   const { response, error } = turn;
   const [addError, setAddError] = useState('');
+  const { openSupplier } = useWorkspace();
   const newSuggestions = response?.suggested_supplier_ids.filter(id => !shortlist.has(id)) ?? [];
 
   return (
@@ -128,7 +140,7 @@ function TurnView({ turn, shortlist, onAddIds, onRetry, retryDisabled }: { turn:
                     <tbody className="divide-y divide-slate-100">
                       {response.evidence.map(item => (
                         <tr key={`${item.supplier_id}:${item.field}`}>
-                          <td className="px-3 py-1.5 font-mono text-xs font-semibold">{item.supplier_id}</td>
+                          <td className="px-3 py-1.5"><button onClick={() => openSupplier(item.supplier_id)} className="font-mono text-xs font-semibold hover:text-blue-700 hover:underline" title={`View ${item.supplier_id} profile`}>{item.supplier_id}</button></td>
                           <td className="px-3 py-1.5"><span className="text-slate-900">{fieldLabel(item.field)}</span> <code className="ml-1 text-[11px] text-slate-500">{item.field}</code></td>
                           <td className="px-3 py-1.5 text-right font-semibold tabular-nums">{formatValue(item.value, item.field)}</td>
                         </tr>

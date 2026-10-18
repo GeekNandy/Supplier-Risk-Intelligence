@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, type Metadata, type Status } from './api';
 import Chat from './Chat';
 import Compare from './Compare';
 import Explorer from './Explorer';
 import Research from './Research';
+import SupplierDetail from './SupplierDetail';
+import { parseCriteria } from './format';
+import { useWorkspace, WorkspaceContext } from './workspace';
 import { MAX_SHORTLIST, useShortlist, type Shortlist } from './shortlist';
 import { ErrorBox, LevelBadge, primaryButton, Spinner } from './ui';
 
@@ -23,6 +26,14 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('explore');
   const shortlist = useShortlist();
   const go = (next: Tab) => { setTab(next); window.scrollTo({ top: 0 }); };
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [chatDraft, setChatDraft] = useState<{ text: string; nonce: number }>();
+  const closeDetail = useCallback(() => setDetailId(null), []);
+  const workspace = useMemo(() => {
+    const definitions = parseCriteria(meta?.criteria_markdown ?? '');
+    return { openSupplier: setDetailId, describe: (field: string) => definitions[field] };
+  }, [meta]);
+  const askAbout = (text: string) => { setChatDraft({ text, nonce: Date.now() }); go('ask'); };
 
   useEffect(() => {
     setError(undefined);
@@ -36,6 +47,7 @@ export default function App() {
   }, [shortlist]);
 
   return (
+    <WorkspaceContext.Provider value={workspace}>
     <div className="min-h-screen pb-28">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
@@ -67,8 +79,8 @@ export default function App() {
           <>
             {/* Panels stay mounted so filters, answers and reports survive tab switches. */}
             <div hidden={tab !== 'explore'}><Explorer meta={meta} shortlist={shortlist} /></div>
-            <div hidden={tab !== 'compare'}><Compare meta={meta} shortlist={shortlist} onExplore={() => go('explore')} onAsk={() => go('ask')} /></div>
-            <div hidden={tab !== 'ask'}><Chat shortlist={shortlist} status={status} onAddIds={addIds} /></div>
+            <div hidden={tab !== 'compare'}><Compare meta={meta} shortlist={shortlist} onExplore={() => go('explore')} onAsk={askAbout} /></div>
+            <div hidden={tab !== 'ask'}><Chat shortlist={shortlist} status={status} onAddIds={addIds} draft={chatDraft} /></div>
             <div hidden={tab !== 'research'}><Research status={status} /></div>
             <HowItWorks status={status} />
           </>
@@ -76,11 +88,14 @@ export default function App() {
       </main>
 
       {meta && tab !== 'research' && <ShortlistTray shortlist={shortlist} onCompare={tab === 'compare' ? undefined : () => go('compare')} />}
+      {meta && detailId && <SupplierDetail id={detailId} meta={meta} shortlist={shortlist} onClose={closeDetail} />}
     </div>
+    </WorkspaceContext.Provider>
   );
 }
 
 function ShortlistTray({ shortlist, onCompare }: { shortlist: Shortlist; onCompare?: () => void }) {
+  const { openSupplier } = useWorkspace();
   return (
     <aside className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-300 bg-white/95 shadow-[0_-4px_16px_rgba(15,23,42,0.08)] backdrop-blur" aria-label="Shortlist">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
@@ -92,7 +107,7 @@ function ShortlistTray({ shortlist, onCompare }: { shortlist: Shortlist; onCompa
           {shortlist.items.length === 0 && <li className="text-sm text-slate-500">Tick suppliers in the table to compare up to 20.</li>}
           {shortlist.items.map(item => (
             <li key={item.id} className="flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 py-1 pl-3 pr-1 text-xs ring-1 ring-slate-200" title={item.name}>
-              <span className="font-mono font-semibold">{item.id}</span>
+              <button onClick={() => openSupplier(item.id)} className="font-mono font-semibold hover:text-blue-700 hover:underline" title={`View ${item.id} details`}>{item.id}</button>
               <LevelBadge level={item.level} />
               <button onClick={() => shortlist.remove(item.id)} className="rounded-full px-1.5 text-slate-500 hover:bg-slate-200 hover:text-red-700" aria-label={`Remove ${item.id} from shortlist`}>✕</button>
             </li>

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { api, type Metadata, type Supplier, type SupplierPage } from './api';
 import { fieldLabel, formatValue, levelOf, OPERATIONAL_FIELDS } from './format';
 import type { Shortlist } from './shortlist';
 import { Card, ErrorBox, inputClass, LevelBadge, ScoreBar, secondaryButton, Spinner } from './ui';
+import { useWorkspace } from './workspace';
 
 const PAGE_SIZE = 25;
 
@@ -116,12 +117,12 @@ export default function Explorer({ meta, shortlist }: { meta: Metadata; shortlis
               <tr>
                 <th className="w-10 px-3 py-2.5"><span className="sr-only">Shortlist</span></th>
                 <th className="px-3 py-2.5">Supplier</th>
-                <th className="px-3 py-2.5">Total risk</th>
+                <th className="px-3 py-2.5"><HeaderTip field="Total_Risk_Index">Total risk</HeaderTip></th>
                 <th className="px-3 py-2.5">Level</th>
-                <th className="px-3 py-2.5">Financial</th>
-                {extraColumn && <th className="px-3 py-2.5">{fieldLabel(extraColumn)}</th>}
-                <th className="px-3 py-2.5">Delivery rating</th>
-                <th className="px-3 py-2.5">Sourcing risk</th>
+                <th className="px-3 py-2.5"><HeaderTip field="Financial_Health_Score">Financial</HeaderTip></th>
+                {extraColumn && <th className="px-3 py-2.5"><HeaderTip field={extraColumn}>{fieldLabel(extraColumn)}</HeaderTip></th>}
+                <th className="px-3 py-2.5"><HeaderTip field="Supplier Delivery Rating">Delivery rating</HeaderTip></th>
+                <th className="px-3 py-2.5"><HeaderTip field="Sourcing Risk Level">Sourcing risk</HeaderTip></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -150,10 +151,17 @@ export default function Explorer({ meta, shortlist }: { meta: Metadata; shortlis
   );
 }
 
+/** Column label with the supplied criteria definition as a hover hint. */
+function HeaderTip({ field, children }: { field: string; children: ReactNode }) {
+  const definition = useWorkspace().describe(field);
+  return definition ? <abbr className="cursor-help no-underline decoration-dotted underline-offset-2 hover:underline" title={definition}>{children}</abbr> : <>{children}</>;
+}
+
 function SupplierRow({ supplier, extraColumn, shortlist }: { supplier: Supplier; extraColumn: string | null; shortlist: Shortlist }) {
   const selected = shortlist.has(supplier.supplierID);
   const disabled = !selected && shortlist.full;
   const toggle = () => { if (!disabled) shortlist.toggle(supplier); };
+  const { openSupplier } = useWorkspace();
   return (
     <tr
       className={`cursor-pointer ${selected ? 'bg-blue-50' : 'hover:bg-slate-50'} ${disabled ? 'cursor-not-allowed' : ''}`}
@@ -172,8 +180,14 @@ function SupplierRow({ supplier, extraColumn, shortlist }: { supplier: Supplier;
         />
       </td>
       <td className="px-3 py-2.5">
-        <div className="font-mono text-xs font-semibold text-slate-900">{supplier.supplierID}</div>
-        <div className="text-slate-600">{supplier['Supplier Name']}</div>
+        <button
+          className="group text-left"
+          onClick={event => { event.stopPropagation(); openSupplier(supplier.supplierID); }}
+          title={`View ${supplier.supplierID} profile`}
+        >
+          <span className="block font-mono text-xs font-semibold text-slate-900 group-hover:text-blue-700 group-hover:underline">{supplier.supplierID} <span className="font-sans font-normal text-blue-700 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">Profile ›</span></span>
+          <span className="block text-slate-600">{supplier['Supplier Name']}</span>
+        </button>
       </td>
       <td className="px-3 py-2.5"><ScoreBar value={supplier.Total_Risk_Index} /></td>
       <td className="px-3 py-2.5"><LevelBadge level={supplier.Total_Risk_Index_Level || null} /></td>

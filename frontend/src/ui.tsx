@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ApiError } from './api';
 import { levelStyle } from './format';
 
@@ -70,6 +71,41 @@ export function Card({ title, subtitle, actions, children, className = '' }: { t
       )}
       <div className="p-5">{children}</div>
     </section>
+  );
+}
+
+export const defId = (field: string) => `def-${field.replace(/\W+/g, '-')}`;
+
+/**
+ * Hover/focus tooltip for a short definition. Rendered in a fixed-position portal so table
+ * cells and scroll containers can't cover or clip it; a hidden copy backs aria-describedby.
+ */
+export function Tip({ id, text, children }: { id: string; text?: string; children: ReactNode }) {
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  useEffect(() => {
+    if (!anchor) return;
+    const hide = () => setAnchor(null);
+    window.addEventListener('scroll', hide, true);
+    return () => window.removeEventListener('scroll', hide, true);
+  }, [anchor]);
+  if (!text) return <>{children}</>;
+  const show = (event: { currentTarget: HTMLElement }) => setAnchor(event.currentTarget.getBoundingClientRect());
+  const hide = () => setAnchor(null);
+  return (
+    <div onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
+      {children}
+      <span id={id} className="sr-only">{text}</span>
+      {anchor && createPortal(
+        <span
+          aria-hidden
+          className="pointer-events-none fixed z-50 w-64 rounded-md bg-slate-900 px-3 py-2 text-xs leading-snug text-white shadow-lg"
+          style={{ left: Math.min(anchor.right + 8, window.innerWidth - 272), top: anchor.top }}
+        >
+          {text}
+        </span>,
+        document.body,
+      )}
+    </div>
   );
 }
 

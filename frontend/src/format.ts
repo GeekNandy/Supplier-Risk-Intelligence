@@ -36,6 +36,15 @@ const UNKNOWN_STYLE = { cell: 'bg-slate-100 text-slate-500', badge: 'bg-slate-10
 
 export const levelStyle = (level: string | null) => (level && LEVEL_STYLES[level]) || UNKNOWN_STYLE;
 
+/** Field → definition, from `- **Field:** description` lines in the supplied criteria Markdown. */
+export function parseCriteria(markdown: string): Record<string, string> {
+  const definitions: Record<string, string> = {};
+  for (const match of markdown.matchAll(/^\s*-\s+\*\*(.+?):\*\*\s*(.+)$/gm)) {
+    definitions[match[1].trim()] = match[2].trim();
+  }
+  return definitions;
+}
+
 export const PERCENT_FIELDS = ['Order Change Rate', 'Supplier Delivery Rating', 'Order Confirmation Rate'];
 
 /** Operational indicators with their own direction (from risk_criteria_description.md). */
