@@ -17,7 +17,7 @@ export default defineConfig({
   use: {
     baseURL,
     httpCredentials: { username: 'browser-jury', password: 'browser-test-password' },
-    viewport: { width: 1440, height: 1000 },
+    viewport: { width: 1280, height: 800 },
     trace: 'retain-on-failure',
     launchOptions: {
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,

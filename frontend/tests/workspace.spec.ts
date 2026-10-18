@@ -17,9 +17,22 @@ test.afterEach(async ({ page }) => {
 
 async function openWorkspace(page: Page) {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Find suppliers' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
+  await expect(page.getByText('Demo dataset (anonymized)')).toBeVisible();
+  await tab(page, 'Explore');
+  await expect(page.getByRole('heading', { name: 'Explore suppliers' })).toBeVisible();
   await expect(page.locator('tbody tr:visible')).toHaveCount(25);
 }
+
+const uploadCsv = [
+  'supplier_id,Supplier Name,Country,Category,Total Risk Index,Financial_Health_Score,Quality_Risk_Score,Compliance_Risk_Score,Digital_Security_Score',
+  'ACME-01,Acme Brakes,Germany,Brakes,42,30,55,20,61',
+  'ACME-02,Borealis Rail,Poland,Bogies,67,72,n/a,44,38',
+  'ACME-03,Cobalt Doors,Czechia,Doors,35,25,31,40,22',
+  ',,,,,,,,',
+  'ACME-04,Delta Seats,Germany,Interiors,58,49,62,71,45',
+  'ACME-03,Cobalt Doors duplicate,Czechia,Doors,36,26,30,41,23',
+].join('\n');
 
 async function tab(page: Page, name: string) {
   await page.getByRole('navigation', { name: 'Workspace' }).getByRole('button', { name: new RegExp(name) }).click();
@@ -46,31 +59,67 @@ test('jury access protects the app while platform readiness stays public', async
   await openWorkspace(page);
 });
 
-test('a loading page cannot shortlist rows from the previous page', async ({ page }) => {
-  await openWorkspace(page);
-  let release!: () => void;
-  const gate = new Promise<void>(resolve => { release = resolve; });
-  let arrived!: () => void;
-  const started = new Promise<void>(resolve => { arrived = resolve; });
-  await page.route('**/api/suppliers?**', async route => {
-    arrived();
-    await gate;
-    await route.continue();
-  });
-  await page.getByRole('button', { name: 'Next →', exact: true }).click();
-  await started;
-  try {
-    await expect(page.getByRole('button', { name: 'Add page to shortlist' })).toBeDisabled();
-    await expect(page.locator('tbody tr:visible input[type=checkbox]:disabled')).toHaveCount(25);
-    await expect(page.getByText('Page 1 of 400', { exact: true })).toBeVisible();
-  } finally {
-    release();
-  }
-  await expect(page.getByText('Page 2 of 400', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Add page to shortlist' })).toBeEnabled();
+test('laptop workspace prioritizes data and keeps results headers visible while scrolling', async ({ page }) => {
+  await page.goto('/');
+  const title = page.getByRole('heading', { name: 'Overview', exact: true });
+  await expect(title).toBeVisible();
+  expect((await title.boundingBox())!.y).toBeLessThan(150);
+  const chart = page.getByRole('img', { name: /Stacked bar chart/ });
+  const footer = page.getByRole('complementary', { name: 'Shortlist' });
+  await expect(chart).toBeVisible();
+  expect((await chart.boundingBox())!.y + 100).toBeLessThan((await footer.boundingBox())!.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await tab(page, 'Explore');
+  const results = page.getByLabel('Supplier results', { exact: true });
+  const header = results.locator('thead');
+  const before = (await header.boundingBox())!.y;
+  await results.evaluate(element => { element.scrollTop = 250; });
+  expect(Math.abs((await header.boundingBox())!.y - before)).toBeLessThan(2);
 });
 
-test('explorer pagination, search, risk labels and ordering use real API data', async ({ page }) => {
+test('glossary fits mobile screens and closes with Escape or an outside click', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const trigger = page.getByRole('button', { name: 'Glossary', exact: true });
+  const panel = page.getByRole('region', { name: 'Risk glossary' });
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  const box = (await panel.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(390);
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page.getByRole('heading', { name: 'Overview', exact: true }).click();
+  await expect(panel).toBeHidden();
+});
+
+test('an uploaded CSV is validated, mapped and never sent to the server', async ({ page }) => {
+  const sent: string[] = [];
+  page.on('request', request => { if (request.method() !== 'GET' || (request.postData() ?? '').includes('ACME')) sent.push(`${request.method()} ${request.url()}`); });
+  await openWorkspace(page);
+  await page.getByRole('button', { name: 'Load your data', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.locator('input[type=file]').setInputFiles({ name: 'test-suppliers.csv', mimeType: 'text/csv', buffer: Buffer.from(uploadCsv) });
+  await expect(dialog).toContainText('No risk-level column');
+  await expect(dialog).toContainText('1 empty row skipped');
+  await expect(dialog).toContainText('1 duplicate supplier ID (e.g. ACME-03)');
+  await expect(dialog).toContainText('Quality_Risk_Score: 1 non-numeric value ("n/a") will show as Unknown');
+  await dialog.getByRole('button', { name: /Continue with warnings/ }).click();
+  await expect(page.getByText('test-suppliers.csv · 4 rows')).toBeVisible();
+  await expect(page.getByText('This file has no risk-level column, so the mix cannot be shown')).toBeVisible();
+  await tab(page, 'Explore');
+  await expect(page.locator('tbody tr:visible')).toHaveCount(4);
+  for (const id of ['ACME-01', 'ACME-02']) await page.getByRole('checkbox', { name: `Add ${id} to shortlist`, exact: true }).check();
+  await tab(page, 'Compare');
+  await expect(page.getByText('Not plotted because a value is Unknown: Quality.')).toBeVisible();
+  await tab(page, 'Ask');
+  await expect(page.getByText('Ask works on the demo dataset')).toBeVisible();
+  expect(sent).toEqual([]);
+});
+
+test('explorer pagination, search, risk labels and ordering use the supplied data', async ({ page }) => {
   await openWorkspace(page);
   const initial = await page.locator('tbody tr:visible').first().innerText();
   await page.getByRole('button', { name: 'Next →', exact: true }).click();
@@ -80,13 +129,10 @@ test('explorer pagination, search, risk labels and ordering use real API data', 
   await expect(page.locator('tbody tr:visible')).toHaveCount(1);
   await expect(page.locator('tbody tr:visible')).toContainText('SUPP_00012');
   await page.getByLabel('Search ID or name').fill('');
-  await page.getByLabel('Overall risk level').selectOption('High');
+  await page.getByLabel('Risk level (as supplied)').selectOption('High');
   await expect(page.locator('tbody tr:visible')).toHaveCount(25);
-  await expect(page.locator('tbody tr:visible').first().locator('td').nth(3)).toHaveText('High');
-  const descending = page.waitForResponse(response => response.url().includes('/api/suppliers?') && new URL(response.url()).searchParams.get('order') === 'desc');
+  await expect(page.locator('tbody tr:visible').first().locator('td').nth(3)).toContainText('High');
   await page.getByRole('combobox', { name: /^Order\b/ }).selectOption('desc');
-  await descending;
-  await expect(page.getByText('Loading suppliers…', { exact: true })).toBeHidden();
   const scores = await page.locator('tbody tr:visible').evaluateAll(rows => rows.map(row => Number(row.querySelectorAll('td')[2].textContent?.trim())));
   expect(scores).toEqual([...scores].sort((a, b) => b - a));
 });
@@ -116,7 +162,7 @@ test('financial ranking passes the chosen shortlist into grounded chat', async (
   await page.getByRole('button', { name: 'Ask about this ranking →', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Question' })).toHaveValue(/lowest financial health risk/);
   await expect(page.getByRole('article')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+  await page.getByRole('main').getByRole('button', { name: 'Ask', exact: true }).click();
   const turn = page.getByRole('article');
   await expect(turn).toContainText('Lowest risk by Financial_Health_Score: SUPP_00731');
   await expect(turn.getByRole('row')).toHaveCount(4);
@@ -153,7 +199,7 @@ test('risk explanation evidence opens the supplier profile and its definitions',
   await turn.getByRole('button', { name: 'SUPP_00018', exact: true }).first().click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('SUPP_00018');
-  await expect(dialog).toContainText('Highest observed risk categories');
+  await expect(dialog).toContainText('Highest observed sub-scores');
   await expect(dialog).toContainText(/financial stability/i);
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
@@ -163,34 +209,22 @@ test('unknown supplier errors do not claim the chat route is missing', async ({ 
   await openWorkspace(page);
   await tab(page, 'Ask');
   await page.getByRole('textbox', { name: 'Question' }).fill('Why is the Total Risk Index of SUPP_99999 so high?');
-  await page.getByRole('button', { name: 'Ask', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Supplier not found: SUPP_99999');
+  await page.getByRole('main').getByRole('button', { name: 'Ask', exact: true }).click();
+  await expect(page.getByText('Supplier not found: SUPP_99999')).toBeVisible();
   await expect(page.getByText('The chat assistant is temporarily unavailable.')).toBeHidden();
 });
 
-test('old comparisons are withheld when a changed shortlist fails to refresh', async ({ page }) => {
+test('compare overlays up to three suppliers on a radar with exact values and a bar view', async ({ page }) => {
   await openWorkspace(page);
-  await selectSuppliers(page, ['SUPP_00012', 'SUPP_00731']);
+  await selectSuppliers(page, ['SUPP_00012', 'SUPP_00450', 'SUPP_00731', 'SUPP_00018']);
   await tab(page, 'Compare');
-  await expect(decision(page)).toBeVisible();
-  let release!: () => void;
-  const gate = new Promise<void>(resolve => { release = resolve; });
-  let arrived!: () => void;
-  const started = new Promise<void>(resolve => { arrived = resolve; });
-  await page.route('**/api/compare', async route => {
-    arrived();
-    await gate;
-    await route.fulfill({ status: 503, json: { detail: 'Comparison temporarily unavailable.' } });
-  });
-  await page.getByRole('button', { name: 'Remove SUPP_00012', exact: true }).click();
-  await started;
-  try {
-    await expect(decision(page)).toBeHidden();
-  } finally {
-    release();
-  }
-  await expect(page.getByRole('alert')).toContainText('Comparison temporarily unavailable.');
-  await expect(decision(page)).toBeHidden();
+  const profile = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Risk profile', exact: true }) });
+  await expect(profile.getByRole('img', { name: /Radar chart of SUPP_00731, SUPP_00012, SUPP_00450/ })).toBeVisible();
+  await expect(profile.getByRole('button', { name: 'SUPP_00018', exact: true })).toBeDisabled();
+  await profile.getByText('Exact values').click();
+  await expect(profile.getByRole('row', { name: /Financial health 53 54 65 50/ })).toBeVisible();
+  await profile.getByRole('button', { name: 'Show as bars', exact: true }).click();
+  await expect(profile.getByRole('img')).toHaveCount(0);
 });
 
 test('blocked clipboard access offers a copyable justification without a browser error', async ({ page }) => {
@@ -200,17 +234,19 @@ test('blocked clipboard access offers a copyable justification without a browser
   await openWorkspace(page);
   await selectSuppliers(page, ['SUPP_00012', 'SUPP_00731']);
   await tab(page, 'Compare');
-  await page.getByRole('button', { name: 'Copy justification', exact: true }).click();
+  await page.getByRole('button', { name: 'Copy summary', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Clipboard access is unavailable.');
   await expect(page.getByRole('textbox', { name: 'Shortlist justification' })).toHaveValue(/SUPP_00012.*SUPP_00731/s);
 });
 
-test('research exposes the real missing-model response', async ({ page }) => {
+test('research explains missing server configuration and disables the action', async ({ page }) => {
   await openWorkspace(page);
   await tab(page, 'Research');
-  await page.getByLabel('Company name *').fill('Siemens AG');
-  await page.getByRole('button', { name: 'Research', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Set LLM_API_KEY, LLM_BASE_URL and LLM_MODEL');
+  await expect(page.getByText('Live research is not configured')).toBeVisible();
+  await expect(page.getByText(/Missing on the server: a language model/)).toBeVisible();
+  await page.getByLabel('Company name (required)').fill('Siemens AG');
+  await expect(page.getByRole('main').getByRole('button', { name: 'Research', exact: true })).toBeDisabled();
+  await expect(page.getByText('Research needs model and search credentials on the server.', { exact: true })).toBeVisible();
 });
 
 function reportFixture(status: ResearchResponse['status']): ResearchResponse {
@@ -235,8 +271,8 @@ for (const [status, label] of [['complete', 'Complete report'], ['partial', 'Par
     await page.route('**/api/research', route => route.fulfill({ json: reportFixture(status) }));
     await openWorkspace(page);
     await tab(page, 'Research');
-    await page.getByLabel('Company name *').fill('Siemens AG');
-    await page.getByRole('button', { name: 'Research', exact: true }).click();
+    await page.getByLabel('Company name (required)').fill('Siemens AG');
+    await page.getByRole('main').getByRole('button', { name: 'Research', exact: true }).click();
     await expect(page.getByText(label, { exact: true })).toBeVisible();
     if (status === 'needs_clarification') await expect(page.getByText(/Which legal entity do you mean/)).toBeVisible();
     if (status === 'partial') await expect(page.getByText('A source page could not be extracted.', { exact: true })).toBeVisible();

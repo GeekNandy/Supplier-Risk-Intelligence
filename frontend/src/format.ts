@@ -1,10 +1,10 @@
 import type { Scalar, Supplier } from './api';
 
-/** "Financial_Health_Score" → "Financial health"; "Total_Risk_Index" → "Total risk index". */
+/** "Financial_Health_Score" → "Financial health"; acronyms such as ESG keep their capitals. */
 export function fieldLabel(field: string): string {
-  if (field === 'Total_Risk_Index') return 'Total risk index';
-  const words = field.replace(/_Score$/, '').replace(/_Risk$/, '').replace(/_/g, ' ').trim();
-  return words.charAt(0) + words.slice(1).toLowerCase();
+  if (field === 'Total_Risk_Index') return 'Total Risk Index (as supplied)';
+  const words = field.replace(/_Score$/i, '').replace(/_Risk$/, '').replace(/_/g, ' ').trim().split(/\s+/);
+  return words.map((word, index) => (/^[A-Z]{2,}$/.test(word) ? word : index === 0 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase())).join(' ');
 }
 
 export function formatValue(value: Scalar | undefined, field?: string): string {
@@ -27,12 +27,12 @@ export const LEVEL_ORDER = ['Low', 'Medium', 'High', 'Critical'];
 
 // Colour only encodes the dataset's own level label; text always carries the label too.
 const LEVEL_STYLES: Record<string, { cell: string; badge: string }> = {
-  Low: { cell: 'bg-emerald-100 text-emerald-950', badge: 'bg-emerald-100 text-emerald-900 ring-emerald-300' },
-  Medium: { cell: 'bg-amber-100 text-amber-950', badge: 'bg-amber-100 text-amber-900 ring-amber-300' },
-  High: { cell: 'bg-orange-200 text-orange-950', badge: 'bg-orange-100 text-orange-900 ring-orange-300' },
-  Critical: { cell: 'bg-red-600 text-white', badge: 'bg-red-100 text-red-900 ring-red-300' },
+  Low: { cell: 'bg-emerald-100 text-gray-900', badge: 'bg-emerald-100 text-gray-900 ring-emerald-300' },
+  Medium: { cell: 'bg-amber-100 text-gray-900', badge: 'bg-amber-100 text-gray-900 ring-amber-300' },
+  High: { cell: 'bg-orange-200 text-gray-900', badge: 'bg-orange-200 text-gray-900 ring-orange-300' },
+  Critical: { cell: 'bg-red-300 text-gray-900', badge: 'bg-red-300 text-gray-900 ring-red-300' },
 };
-const UNKNOWN_STYLE = { cell: 'bg-slate-100 text-slate-500', badge: 'bg-slate-100 text-slate-700 ring-slate-300' };
+const UNKNOWN_STYLE = { cell: 'bg-gray-50 text-gray-500', badge: 'bg-gray-50 text-gray-700 ring-gray-300' };
 
 export const levelStyle = (level: string | null) => (level && LEVEL_STYLES[level]) || UNKNOWN_STYLE;
 
