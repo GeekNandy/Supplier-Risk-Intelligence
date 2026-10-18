@@ -29,7 +29,9 @@ The app is live at https://supplier-risk-intelligence-qghi.onrender.com on the
 Free plan in Frankfurt. Public HTTPS, the built UI/assets, supplier comparison
 and authenticated API docs passed real HTTP checks. Anonymous and incorrect
 credentials returned 401. Both challenge questions passed through the hosted
-Nemotron integration. Render confirms `/api/ready` and CI-gated auto-deploys.
+Nemotron integration. Render confirms `/api/ready` and the CI-gated deploy policy;
+automatic triggering requires the GitHub app connection. The final code deploy
+was triggered manually after all checks passed.
 
 The first hosted research smoke exposed malformed model JSON. Research now sends
 the full Pydantic JSON schema in the provider's `response_format`, then validates
@@ -38,6 +40,13 @@ ten cited findings from twelve sources in 31.5 seconds, with no failed workflow
 stages. Evidence limitations keep the report honestly marked partial. The
 regression suite preserves collected sources and marks generation failed for
 malformed, schema-invalid and output-truncated responses.
+
+**Final hosted smoke passed** on deployed commit `8d9e3f5`: both live grounded
+chat examples and seven cited Knorr-Bremse findings from thirteen sources, with
+seven evidence limitations retained. Report generation and source-reference
+checks passed. The [main CI run](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39132296236)
+also passed the 83 backend tests, 16 browser checks, Python/UI builds, clean-wheel
+HTTP smoke and production Docker build/smoke.
 
 Both [push verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122070804)
 and [pull-request verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122071087)
