@@ -6,4 +6,9 @@
 **/node_modules
 **/dist
 **/.pytest_cache
+**/.ruff_cache
+**/*.egg-info
+**/build
+**/test-results
+**/playwright-report
 

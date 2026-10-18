@@ -1,0 +1,100 @@
+# Backend verification
+
+Verified on 18 October 2026 with Python 3.12 and Node 24. The committed workflow
+uses Python 3.12 and Node 22. Dependencies are pinned with hashes for Python and
+the existing npm lockfile for the frontend.
+
+## Checks performed
+
+| Check | Result |
+|---|---|
+| Backend suite | 69 tests passed |
+| Browser integration suite | 16 tests passed against the integrated UI and a real Python server |
+| Ruff lint and format checks | Passed |
+| Generated OpenAPI snapshot | Matches running backend schemas |
+| Python source distribution and wheel | Built successfully |
+| Frontend TypeScript and Vite build | Passed |
+| Clean wheel installation | Passed with locked runtime dependencies |
+| Real HTTP production smoke | Passed from a separate working directory |
+| Live Tavily Search and Extract | Passed through the backend's actual SearchClient: four search results and one extracted Siemens source page |
+| Tavily remote MCP | Initialization, authenticated tool discovery and a live `tavily_search` call passed |
+| Live Nemotron 3.5 Super VL chat | Both challenge questions passed through real HTTP endpoints with supplier tools and verified evidence |
+| Live Nemotron/Tavily research | Siemens report returned nine findings with valid source references from thirteen sources in 30.4 seconds; partial status retained for evidence gaps |
+| Docker image | GitHub Actions build and in-container HTTP smoke passed as the non-root runtime user |
+
+Both [push verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122070804)
+and [pull-request verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122071087)
+completed successfully for backend commit `0f4e823`. These include the locked
+dependency install, 69 tests, lint/format, OpenAPI check, Python/frontend builds,
+clean-wheel smoke, and Docker build/smoke. Local checks used Node 24; the hosted
+checks also verified the supported Node 22 setup. No local Docker engine was
+available, so the actual image check ran on GitHub's runner.
+
+Tavily and Nemotron were subsequently verified with supplied credentials in this workspace.
+The keys are stored only in a gitignored, owner-readable `.env`; they are not part of
+the repository or deployment. MCP was verified through direct protocol calls;
+this does not register native Tavily tools in the current ChatGPT session.
+
+The live model configuration is `https://api.tokenfactory.nebius.com/v1/` with
+`nvidia/Nemotron-3.5-Super-VL` and
+`LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}`. The initial
+research report hit the model's output limit with optional thinking enabled.
+After disabling it, both supplier questions and report generation passed. The
+financial comparison completed in 7.2 seconds and the risk explanation in 8.2 seconds.
+The research check confirmed nonempty findings, completed report generation and
+source references belonging to the retrieved source set. Publication-date gaps,
+historical evidence and limited independent coverage remain visible in the report.
+
+The HTTP smoke starts Uvicorn using the installed wheel, checks readiness with
+10,000 suppliers, checks unauthorized/authorized jury access, serves the built
+frontend and its assets, opens API docs, filters suppliers, compares 20 suppliers,
+answers both challenge examples, and checks missing-provider errors. It clears
+AI credentials for the child process, uses temporary jury credentials, and shuts
+down the server on success or failure.
+
+Provider integration tests use HTTPX transport stubs while running the actual
+model/search adapters and FastAPI orchestration. They check native tool payloads,
+server-derived evidence and rankings, research search/extraction/report payloads,
+source retention after provider failures, and safe error messages. They verify
+the implementation contract. Live Tavily search/extraction and Nemotron orchestration
+were separately verified above. The deployed end-to-end workflow still needs the
+same credential-backed smoke test after deployment.
+
+The suite also covers ties, missing scores, invalid datasets, maximum selection
+size, pagination, unknown fields/IDs, malformed JSON, invalid URLs, streamed body
+limits, CORS, malformed login headers and required-production configuration.
+
+## UI integration
+
+`integration-ui-backend` combines UI commit `a2773c2` from `feature-ekaterina` with
+backend commit `332c221` from `feature-sharad`. The browser suite verifies jury
+authentication, pagination/filtering/sorting, twenty-supplier limits and reload
+persistence, tied financial scores, comparison-to-chat context, both challenge
+questions, supplier profiles/definitions, unknown-supplier errors, safe refresh
+failures, clipboard fallback, citations and a mobile viewport.
+
+Supplier/compare/chat browser requests use the actual FastAPI endpoints and
+original challenge data. The missing-model research error also uses the actual
+backend. Complete, partial and clarification research reports use explicitly
+labelled API fixtures to verify UI rendering and citation navigation; they do not
+prove live Nemotron synthesis. All browser-server provider keys are cleared, so
+the checks spend no external API credits. CI runs the same suite after the build.
+
+The integration fixes prevent old comparison results from surviving a failed
+shortlist refresh, stop old-page rows being added during loading, distinguish a
+missing supplier from an unavailable route, handle denied clipboard access and
+describe equal-score winners accurately. Both feature branches are preserved.
+
+## Reproduce
+
+Follow the root README's verification commands and `docs/DEPLOYMENT.md` for a clean
+wheel or container smoke check. Before submission, run:
+
+```bash
+python scripts/smoke_ai.py --api-url https://YOUR-HOST --require-live --research "Siemens AG" --country Germany --website https://www.siemens.com --jury-user jury
+```
+
+The jury password is prompted without echoing. The live URL, deployed smoke test,
+demo polish and recording remain team delivery
+work. The comparison/research results need source review; reference validation does
+not prove every model-generated semantic interpretation.

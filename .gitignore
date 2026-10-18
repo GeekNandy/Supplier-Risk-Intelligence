@@ -2,11 +2,15 @@
 .env.*
 !.env.example
 .venv/
+.ruff_cache/
+build/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 *.egg-info/
 node_modules/
 dist/
+test-results/
+playwright-report/
 .DS_Store
 
