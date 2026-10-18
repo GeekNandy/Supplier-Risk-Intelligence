@@ -108,7 +108,7 @@ function TurnView({ turn, shortlist, onAddIds, onRetry, retryDisabled }: { turn:
   const newSuggestions = response?.suggested_supplier_ids.filter(id => !shortlist.has(id)) ?? [];
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <article className="rounded border border-gray-200 bg-white shadow-sm">
       <header className="border-b border-gray-100 px-5 py-3">
         <p className="font-medium text-gray-900">{turn.question}</p>
         {turn.contextIds.length > 0 && <p className="mt-0.5 text-xs text-gray-500">Context: {turn.contextIds.length} shortlisted supplier{turn.contextIds.length === 1 ? '' : 's'}</p>}

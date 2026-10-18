@@ -50,7 +50,7 @@ export default function Overview({ dataset, shortlist }: { dataset: Dataset; sho
 
       {rows.length === 0 ? <EmptyState title="No suppliers match these filters" action={<button className="text-sm underline" onClick={() => setFilters({})}>Clear filters</button>} /> : (
         <div className="space-y-5">
-          <Kpis dataset={dataset} rows={rows} />
+          <Kpis dataset={dataset} rows={rows} shortlistCount={shortlist.ids.length} />
           <div className="grid gap-5 lg:grid-cols-2">
             <RiskMix dataset={dataset} rows={rows} />
             <ScoreScatter dataset={dataset} rows={rows} shortlist={shortlist} onPick={openSupplier} />
@@ -71,25 +71,31 @@ function distinct(rows: Supplier[], field: string): string[] {
     .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
 }
 
-function Kpis({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
+function Kpis({ dataset, rows, shortlistCount }: { dataset: Dataset; rows: Supplier[]; shortlistCount: number }) {
   const counts = dataset.levels.map(level => [level, rows.filter(row => row.Total_Risk_Index_Level === level).length] as const);
   const count = (field?: string) => (field ? distinct(rows, field).length.toLocaleString() : null);
+  const totals = rows.map(row => row.Total_Risk_Index).filter((value): value is number => typeof value === 'number').sort((a, b) => a - b);
+  const median = totals.length ? (totals.length % 2 ? totals[(totals.length - 1) / 2] : (totals[totals.length / 2 - 1] + totals[totals.length / 2]) / 2) : null;
+  // Country/category tiles when the file has them; otherwise descriptive facts that are always available.
   const tiles: { label: string; value: string | null; note?: string }[] = [
-    { label: 'Suppliers', value: rows.length.toLocaleString() },
-    { label: 'Countries', value: count(dataset.mapping.country), note: 'Not in this dataset' },
-    { label: 'Categories', value: count(dataset.mapping.category), note: 'Not in this dataset' },
+    { label: 'Suppliers', value: rows.length.toLocaleString(), note: dataset.kind === 'demo' ? 'Anonymized demo dataset' : dataset.label },
+    dataset.mapping.country
+      ? { label: 'Countries', value: count(dataset.mapping.country) }
+      : { label: 'Median Total Risk Index', value: median === null ? null : String(median), note: median === null ? 'No Total Risk Index in this file' : 'As supplied · 0 = no risk, 100 = max' },
+    dataset.mapping.category
+      ? { label: 'Categories', value: count(dataset.mapping.category) }
+      : { label: 'Your shortlist', value: `${shortlistCount} / 20`, note: shortlistCount ? 'Ready to compare side by side' : 'Tick suppliers in Explore' },
   ];
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {tiles.map(tile => (
-        <div key={tile.label} className="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white px-4 py-3">
+        <div key={tile.label} className="rounded border border-gray-200 bg-white px-6 py-5">
           <SectionLabel>{tile.label}</SectionLabel>
-          {tile.value !== null
-            ? <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-gray-900">{tile.value}</p>
-            : <p className="mt-2 text-sm text-gray-500">{tile.note}</p>}
+          {tile.value !== null && <p className="mt-2 text-[32px] font-bold leading-none tabular-nums text-gray-900">{tile.value}</p>}
+          {tile.note && <p className={`text-xs text-gray-500 ${tile.value !== null ? 'mt-2' : 'mt-3'}`}>{tile.note}</p>}
         </div>
       ))}
-      <div className="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white px-4 py-3">
+      <div className="rounded border border-gray-200 bg-white px-6 py-5">
         <SectionLabel>By risk level (as supplied)</SectionLabel>
         {dataset.hasLevel ? (
           <ul className="mt-1.5 space-y-1">
@@ -144,7 +150,7 @@ function RiskMix({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
                 <XAxis dataKey="group" tick={{ fontSize: 12, fill: themeColors().text }} tickLine={false} axisLine={{ stroke: themeColors().grid }} />
                 <YAxis tick={tick()} tickLine={false} axisLine={false} allowDecimals={false} />
                 <Tooltip cursor={{ fill: themeColors().grid }} contentStyle={tooltipStyle()} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} formatter={value => <span style={{ color: themeColors().text }}>{value}</span>} />
                 {dataset.levels.map((level, index) => <Bar key={level} dataKey={level} stackId="levels" fill={colorFor(level)} isAnimationActive={false} />)}
               </BarChart>
             </ResponsiveContainer>
@@ -222,7 +228,7 @@ function ScoreScatter({ dataset, rows, shortlist, onPick }: { dataset: Dataset; 
                 );
               }}
             />
-            <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} formatter={value => <span style={{ color: themeColors().text }}>{value}</span>} />
             {series.map((item, index) => (
               <Scatter key={item.level} name={item.level} data={item.points} fill={dataset.hasLevel ? colorFor(item.level) : themeColors().neutral} fillOpacity={0.55}
                 shape={LEVEL_SHAPE[item.level] ?? 'circle'} onClick={click} cursor="pointer" isAnimationActive={false} />

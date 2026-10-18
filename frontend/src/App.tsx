@@ -11,6 +11,7 @@ import Overview from './Overview';
 import Research from './Research';
 import { MAX_SHORTLIST, useShortlist, type Shortlist } from './shortlist';
 import SupplierDetail from './SupplierDetail';
+import Train from './Train';
 import { Btn, EmptyState, ErrorBox, LevelBadge, Skeleton, SkeletonRows, ViewHeader } from './ui';
 import { useWorkspace, WorkspaceContext } from './workspace';
 
@@ -74,22 +75,23 @@ export default function App() {
   return (
     <WorkspaceContext.Provider value={workspace}>
       <div className="min-h-screen pb-28">
-        <header className="border-b border-gray-200 bg-white">
+        <header className="sri-hero" data-ix-theme="classic" data-ix-color-schema="dark">
           <div className="mx-auto max-w-[1200px] px-6 pt-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="sri-label">Rail procurement · Supplier risk</p>
-                <h1 className="mt-1 text-2xl font-semibold text-gray-900">Supplier Risk Intelligence</h1>
-                <p className="mt-1 text-xs text-gray-500">Built for the Siemens Supplier Risk Intelligence challenge</p>
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <p className="sri-label !text-accent">Rail procurement · Supplier risk</p>
               <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
                 <DataIndicator dataset={dataset} onSwitch={() => setLoaderOpen(true)} />
                 <Btn variant="primary" onClick={() => setLoaderOpen(true)}>Load your data</Btn>
                 <Glossary />
               </div>
             </div>
+            <h1 className="mt-6 text-[32px] font-bold leading-tight text-gray-900 sm:text-[40px]">Supplier Risk Intelligence</h1>
+            <p className="mt-2 max-w-2xl text-base text-gray-700">Explore, compare and research rail component suppliers, with every number traceable to its source.</p>
+            <p className="mt-1 text-xs text-gray-500">Built for the Siemens Supplier Risk Intelligence challenge</p>
           </div>
-          <TrainBand />
+          <div className="mt-4">
+            <Train />
+          </div>
           <RouteNav tab={tab} onGo={go} shortlistCount={shortlist.ids.length} />
         </header>
 
@@ -154,7 +156,7 @@ const TAB_HINTS: Record<Tab, string> = {
 /** Tabs drawn as a route line: stations joined by a track, the current station in the primary colour. */
 function RouteNav({ tab, onGo, shortlistCount }: { tab: Tab; onGo: (tab: Tab) => void; shortlistCount: number }) {
   return (
-    <nav className="mx-auto max-w-[1200px] overflow-x-auto px-6 pb-4 pt-2" aria-label="Workspace">
+    <nav className="mx-auto max-w-[1200px] overflow-x-auto px-6 pb-5 pt-4" aria-label="Workspace">
       <ol className="relative grid min-w-[640px] grid-cols-5">
         <span className="absolute left-[10%] right-[10%] top-[11px] h-0.5 bg-gray-300" aria-hidden />
         {TABS.map(item => {
@@ -167,7 +169,7 @@ function RouteNav({ tab, onGo, shortlistCount }: { tab: Tab; onGo: (tab: Tab) =>
                 className="group flex flex-col items-center gap-1.5 rounded px-2 pb-1 text-center"
               >
                 <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${active ? 'border-accent bg-accent' : 'border-gray-400 bg-[var(--theme-color-2)] group-hover:border-accent'}`}
+                  className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${active ? 'border-accent bg-accent' : 'border-gray-400 bg-[var(--sri-hero-bg)] group-hover:border-accent'}`}
                   aria-hidden
                 >
                   <span className={`h-2 w-2 rounded-full ${active ? 'bg-on-accent' : 'bg-transparent group-hover:bg-accent'}`} />
@@ -183,46 +185,6 @@ function RouteNav({ tab, onGo, shortlistCount }: { tab: Tab; onGo: (tab: Tab) =>
         })}
       </ol>
     </nav>
-  );
-}
-
-/** Decorative line drawing: catenary, a three-car train and sleepers on a track. Hand-drawn, no external assets. */
-function TrainBand() {
-  return (
-    <div className="mx-auto max-w-[1200px] px-6" aria-hidden>
-      <svg viewBox="0 0 1200 56" className="block h-12 w-full text-accent" preserveAspectRatio="xMaxYMid meet" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <defs>
-          <pattern id="sleepers" width="18" height="8" patternUnits="userSpaceOnUse">
-            <line x1="4" y1="0" x2="4" y2="8" strokeOpacity="0.35" />
-          </pattern>
-        </defs>
-        {/* Overhead line and masts */}
-        <line x1="0" y1="6" x2="1200" y2="6" strokeOpacity="0.35" />
-        {[120, 420, 720, 1020].map(x => <path key={x} d={`M${x} 2 V48 M${x} 6 H${x + 14}`} strokeOpacity="0.25" />)}
-        {/* Track */}
-        <rect x="0" y="44" width="1200" height="8" fill="url(#sleepers)" stroke="none" />
-        <line x1="0" y1="45" x2="1200" y2="45" strokeOpacity="0.6" />
-        <line x1="0" y1="51" x2="1200" y2="51" strokeOpacity="0.35" />
-        {/* Train: two cars and a power car with nose, windows, bogies and pantograph */}
-        <g strokeOpacity="0.9">
-          {[690, 850].map(x => (
-            <g key={x}>
-              <rect x={x} y="18" width="152" height="22" rx="3" />
-              {[0, 1, 2, 3, 4, 5].map(i => <rect key={i} x={x + 10 + i * 23} y="22" width="15" height="7" rx="1" strokeOpacity="0.7" />)}
-              <circle cx={x + 22} cy="41.5" r="2.5" /><circle cx={x + 34} cy="41.5" r="2.5" />
-              <circle cx={x + 118} cy="41.5" r="2.5" /><circle cx={x + 130} cy="41.5" r="2.5" />
-            </g>
-          ))}
-          <path d="M1010 40 V18 H1110 C1138 18 1156 26 1168 40 Z" />
-          <path d="M1118 22 H1132 L1146 32 H1118 Z" strokeOpacity="0.7" />
-          {[0, 1, 2].map(i => <rect key={i} x={1020 + i * 26} y="22" width="18" height="7" rx="1" strokeOpacity="0.7" />)}
-          <line x1="1010" y1="34" x2="1160" y2="34" strokeOpacity="0.5" />
-          <circle cx="1032" cy="41.5" r="2.5" /><circle cx="1044" cy="41.5" r="2.5" />
-          <circle cx="1124" cy="41.5" r="2.5" /><circle cx="1136" cy="41.5" r="2.5" />
-          <path d="M1040 18 L1052 9 L1064 18 M1046 9 H1058" />
-        </g>
-      </svg>
-    </div>
   );
 }
 

@@ -39,7 +39,7 @@ export default function SupplierDetail({ id, dataset, shortlist, onClose }: { id
     <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true" aria-labelledby="supplier-detail-title">
       <button className="absolute inset-0 bg-[var(--theme-color-backdrop)]" onClick={onClose} aria-label="Close supplier profile" tabIndex={-1} />
       <aside className="relative flex h-full w-full max-w-xl flex-col border-l border-gray-200 bg-white">
-        <header className="flex items-start justify-between gap-3 border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white px-5 py-4">
+        <header className="flex items-start justify-between gap-3 border-b border-gray-200 bg-white px-5 py-4">
           <div className="min-w-0">
             <SectionLabel>Anonymized supplier · {dataset.label}</SectionLabel>
             <h2 id="supplier-detail-title" className="mt-0.5 font-mono text-xl font-semibold text-gray-900">{id}</h2>

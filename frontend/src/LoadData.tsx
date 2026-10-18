@@ -45,8 +45,8 @@ export default function LoadData({ templateColumns, onLoaded, onUseDemo, onClose
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[var(--theme-color-backdrop)] p-4 sm:p-8" role="dialog" aria-modal="true" aria-labelledby="load-data-title">
-      <div className="w-full max-w-4xl rounded-xl border border-gray-200 bg-white">
-        <header className="flex items-start justify-between gap-3 border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white px-6 py-4">
+      <div className="w-full max-w-4xl rounded border border-gray-200 bg-white">
+        <header className="flex items-start justify-between gap-3 border-b border-gray-200 bg-white px-6 py-4">
           <div>
             <h2 id="load-data-title" className="text-lg font-semibold text-gray-900">{table ? `Map columns · ${table.fileName}` : 'Load your data'}</h2>
             <p className="text-sm text-gray-600">Your file is read in this browser only. It is not uploaded to the server or sent to any model.</p>
@@ -73,7 +73,7 @@ export function DropZone({ onFile, compact = false }: { onFile: (file: File | un
       onDragOver={event => { event.preventDefault(); setOver(true); }}
       onDragLeave={() => setOver(false)}
       onDrop={drop}
-      className={`rounded-xl border-2 border-dashed text-center transition-colors ${over ? 'border-amber-400 bg-accent-soft' : 'border-gray-300 bg-gray-50'} ${compact ? 'px-4 py-6' : 'px-6 py-10'}`}
+      className={`rounded border-2 border-dashed text-center transition-colors ${over ? 'border-amber-400 bg-accent-soft' : 'border-gray-300 bg-gray-50'} ${compact ? 'px-4 py-6' : 'px-6 py-10'}`}
     >
       <p className="font-semibold text-gray-900">Drop a CSV file here</p>
       <p className="mt-1 text-sm text-gray-600">or</p>

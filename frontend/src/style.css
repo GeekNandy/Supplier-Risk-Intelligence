@@ -9,10 +9,12 @@
  * Tailwind's palette names are kept as aliases so existing utility classes follow the theme.
  */
 @theme {
-  --font-sans: var(--theme-font-sans), Arial, Helvetica, ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--theme-font-code), ui-monospace, Consolas, "Cascadia Mono", Menlo, monospace;
+  /* Siemens Sans is licensed and not bundled: it renders where installed, otherwise siemens.com's own fallbacks. */
+  --font-sans: "Siemens Sans", SiemensSans, "Helvetica Neue", "Segoe UI", Arial, ui-sans-serif, system-ui, sans-serif;
+  /* IDs and figures use the same sans with tabular numerals (as on siemens.com), not a code font. */
+  --font-mono: "Siemens Sans", SiemensSans, "Helvetica Neue", "Segoe UI", Arial, ui-sans-serif, system-ui, sans-serif;
 
-  --color-white: var(--theme-color-2);
+  --color-white: var(--sri-surface);
   --color-gray-50: var(--theme-color-component-1);
   --color-gray-100: var(--theme-color-ghost--hover);
   --color-gray-200: var(--theme-color-x-weak-bdr);
@@ -62,13 +64,96 @@
   --color-red-900: var(--theme-color-alarm);
 }
 
+:root { --sri-page: var(--theme-color-2); --sri-surface: var(--theme-color-1); }
+[data-ix-color-schema="dark"] { --sri-page: var(--theme-color-1); --sri-surface: var(--theme-color-2); }
+
+/* Siemens-style brand layer on top of iX classic light: Deep Blue text, petrol accent, slate secondary text. */
+:root[data-ix-theme="classic"][data-ix-color-schema="light"] {
+  --theme-color-primary: #007a7d;
+  --theme-color-primary--hover: #00676a;
+  --theme-color-primary--active: #005557;
+  --theme-color-primary--contrast: #fff;
+  --theme-color-ghost--selected: rgba(0, 153, 153, 0.12);
+  --theme-color-std-text: #000028;
+  --theme-color-contrast-text: #000028;
+  --theme-color-soft-text: #4c4c68;
+  --theme-color-x-weak-bdr: #dfe3e8;
+  --theme-color-weak-bdr: #c9cfd6;
+}
+
+/* Deep-blue hero: the iX dark scheme scoped to the header, with Siemens teal as its accent. */
+.sri-hero {
+  --theme-color-primary: #00cccc;
+  --theme-color-primary--hover: #33dede;
+  --theme-color-primary--active: #00b3b3;
+  --theme-color-primary--contrast: #000028;
+  --theme-color-ghost--selected: rgba(0, 204, 204, 0.16);
+  --sri-surface: rgba(255, 255, 255, 0.06);
+  --sri-hero-bg: #000028;
+  color: var(--theme-color-std-text);
+  background:
+    radial-gradient(900px 320px at 88% -40%, rgba(0, 204, 204, 0.28), transparent 70%),
+    radial-gradient(700px 260px at 10% 120%, rgba(0, 153, 153, 0.18), transparent 70%),
+    #000028;
+}
+
+/* Colour aliases resolve where they are declared, so the hero re-declares them in its own (dark) scope. */
+.sri-hero {
+  --color-white: var(--sri-surface);
+  --color-gray-50: var(--theme-color-component-1);
+  --color-gray-100: var(--theme-color-ghost--hover);
+  --color-gray-200: var(--theme-color-x-weak-bdr);
+  --color-gray-300: var(--theme-color-weak-bdr);
+  --color-gray-400: var(--theme-color-soft-bdr);
+  --color-gray-500: var(--theme-color-soft-text);
+  --color-gray-600: var(--theme-color-soft-text);
+  --color-gray-700: var(--theme-color-std-text);
+  --color-gray-800: var(--theme-color-std-text);
+  --color-gray-900: var(--theme-color-contrast-text);
+  --color-accent: var(--theme-color-primary);
+  --color-accent-strong: var(--theme-color-primary--hover);
+  --color-accent-soft: var(--theme-color-ghost--selected);
+  --color-on-accent: var(--theme-color-primary--contrast);
+  --color-emerald-50: color-mix(in srgb, var(--theme-color-success) 12%, transparent);
+  --color-emerald-100: color-mix(in srgb, var(--theme-color-success) 18%, transparent);
+  --color-emerald-200: color-mix(in srgb, var(--theme-color-success) 40%, transparent);
+  --color-emerald-300: color-mix(in srgb, var(--theme-color-success) 55%, transparent);
+  --color-emerald-700: var(--theme-color-success);
+  --color-emerald-800: var(--theme-color-success);
+  --color-emerald-900: var(--theme-color-success);
+  --color-emerald-950: var(--theme-color-success);
+  --color-amber-50: color-mix(in srgb, var(--theme-color-warning) 12%, transparent);
+  --color-amber-100: color-mix(in srgb, var(--theme-color-warning) 18%, transparent);
+  --color-amber-200: color-mix(in srgb, var(--theme-color-warning) 40%, transparent);
+  --color-amber-300: color-mix(in srgb, var(--theme-color-warning) 55%, transparent);
+  --color-amber-400: var(--theme-color-primary);
+  --color-amber-500: var(--theme-color-primary);
+  --color-amber-700: var(--theme-color-warning);
+  --color-amber-800: var(--theme-color-warning);
+  --color-amber-900: var(--theme-color-warning);
+  --color-amber-950: var(--theme-color-warning);
+  --color-orange-100: color-mix(in srgb, var(--theme-color-critical) 18%, transparent);
+  --color-orange-200: color-mix(in srgb, var(--theme-color-critical) 30%, transparent);
+  --color-orange-300: color-mix(in srgb, var(--theme-color-critical) 55%, transparent);
+  --color-orange-900: var(--theme-color-critical);
+  --color-orange-950: var(--theme-color-critical);
+  --color-red-50: color-mix(in srgb, var(--theme-color-alarm) 12%, transparent);
+  --color-red-100: color-mix(in srgb, var(--theme-color-alarm) 18%, transparent);
+  --color-red-200: color-mix(in srgb, var(--theme-color-alarm) 40%, transparent);
+  --color-red-300: color-mix(in srgb, var(--theme-color-alarm) 55%, transparent);
+  --color-red-600: var(--theme-color-alarm);
+  --color-red-700: var(--theme-color-alarm);
+  --color-red-900: var(--theme-color-alarm);
+}
+
 :root {
   color: var(--theme-color-std-text);
-  background: var(--theme-color-1);
+  background: var(--sri-page);
   font-family: var(--font-sans);
   font-size: 14px;
+  -webkit-font-smoothing: antialiased;
 }
-body { margin: 0; background: var(--theme-color-1); }
+body { margin: 0; background: var(--sri-page); }
 
 /* Text fields and selects share the iX input look (native elements keep their <label>s). */
 .sri-field {
@@ -98,3 +183,5 @@ select.sri-field option, select.sri-field optgroup { background: var(--theme-col
 
 /* Small uppercase label used across cards. */
 .sri-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--theme-color-soft-text); }
+
+.font-mono { font-variant-numeric: tabular-nums; }
