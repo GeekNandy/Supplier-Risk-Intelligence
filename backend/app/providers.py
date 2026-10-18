@@ -133,7 +133,13 @@ class ModelClient:
     def __init__(self, settings: Settings, client: httpx.AsyncClient):
         self.settings, self.client = settings, client
 
-    async def complete(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
+    async def complete(
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+        *,
+        response_schema: dict | None = None,
+    ) -> dict:
         self.settings.require_llm()
         base = self.settings.llm_base_url.rstrip("/")
         extra = json.loads(self.settings.llm_extra_body)
@@ -146,6 +152,11 @@ class ModelClient:
         }
         if tools:
             payload.update(tools=tools, tool_choice="auto")
+        if response_schema is not None:
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "response", "schema": response_schema},
+            }
         result = await post_json(
             self.client,
             base + "/chat/completions",

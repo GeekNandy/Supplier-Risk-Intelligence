@@ -8,6 +8,10 @@ The feature lists below describe the implemented UI and remain useful as a demo 
 
 ## Final frontend delivery
 
+**Live buyer workspace:** https://supplier-risk-intelligence-qghi.onrender.com
+Sign in as `jury` with the password shared privately by Sharad. Further UI PRs
+should start from current `main`; merges deploy to this URL after CI passes.
+
 1. Start your next branch from the latest `main`; the old feature branch does not include the complete merged backend.
 2. Review the deployed buyer journey: filter suppliers, select three, compare, ask the financial-risk question, inspect a supplier profile, research a real company and open a cited source.
 3. Check desktop and mobile layout, the 20-supplier heatmap, long research findings, loading/retry states and the partial-report limitations. Preserve the implemented API field names and evidence semantics.
@@ -81,7 +85,7 @@ Sharad's backend now includes jury authentication, readiness checks, strict requ
 
 No custom login screen is needed for the hackathon: on the deployed same-origin app, the browser's HTTP Basic prompt handles jury login. For local UI development, leave both `JURY_USERNAME` and `JURY_PASSWORD` blank in your own `.env`. `GET /api/ready` is a public platform check; `/api/status` reports configuration only and does not prove provider connectivity.
 
-Next actions for you: review the integrated explorer/selection/heatmap, chat evidence UI and research source views, then polish and record the full buyer journey. Nemotron and Tavily are configured privately in the development workspace. Your own checkout and the deployed app need their environment settings; keys are never included in Git.
+Next actions for you: review the integrated explorer/selection/heatmap, chat evidence UI and research source views, then polish and record the full buyer journey. Nemotron and Tavily are configured privately in the development workspace. Your own checkout needs its environment settings; the hosted service is already configured privately. Keys are never included in Git.
 
 ## Demo journey
 
