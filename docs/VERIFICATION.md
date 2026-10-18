@@ -9,6 +9,7 @@ the existing npm lockfile for the frontend.
 | Check | Result |
 |---|---|
 | Backend suite | 69 tests passed |
+| Browser integration suite | 16 tests passed against the integrated UI and a real Python server |
 | Ruff lint and format checks | Passed |
 | Generated OpenAPI snapshot | Matches running backend schemas |
 | Python source distribution and wheel | Built successfully |
@@ -52,6 +53,27 @@ The suite also covers ties, missing scores, invalid datasets, maximum selection
 size, pagination, unknown fields/IDs, malformed JSON, invalid URLs, streamed body
 limits, CORS, malformed login headers and required-production configuration.
 
+## UI integration
+
+`integration-ui-backend` combines UI commit `a2773c2` from `feature-ekaterina` with
+backend commit `332c221` from `feature-sharad`. The browser suite verifies jury
+authentication, pagination/filtering/sorting, twenty-supplier limits and reload
+persistence, tied financial scores, comparison-to-chat context, both challenge
+questions, supplier profiles/definitions, unknown-supplier errors, safe refresh
+failures, clipboard fallback, citations and a mobile viewport.
+
+Supplier/compare/chat browser requests use the actual FastAPI endpoints and
+original challenge data. The missing-model research error also uses the actual
+backend. Complete, partial and clarification research reports use explicitly
+labelled API fixtures to verify UI rendering and citation navigation; they do not
+prove live Nemotron synthesis. All browser-server provider keys are cleared, so
+the checks spend no external API credits. CI runs the same suite after the build.
+
+The integration fixes prevent old comparison results from surviving a failed
+shortlist refresh, stop old-page rows being added during loading, distinguish a
+missing supplier from an unavailable route, handle denied clipboard access and
+describe equal-score winners accurately. Both feature branches are preserved.
+
 ## Reproduce
 
 Follow the root README's verification commands and `docs/DEPLOYMENT.md` for a clean
@@ -61,7 +83,7 @@ wheel or container smoke check. Before submission, run:
 python scripts/smoke_ai.py --api-url https://YOUR-HOST --require-live --research "Siemens AG" --country Germany --website https://www.siemens.com --jury-user jury
 ```
 
-The jury password is prompted without echoing. Frontend buyer-workspace completion,
-the live URL, actual provider verification and demo recording remain team delivery
+The jury password is prompted without echoing. The live URL, model-backed provider
+verification, demo polish and recording remain team delivery
 work. The comparison/research results need source review; reference validation does
 not prove every model-generated semantic interpretation.

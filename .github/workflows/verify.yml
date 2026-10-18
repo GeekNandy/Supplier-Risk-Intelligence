@@ -1,8 +1,8 @@
-name: Backend and production build
+name: Backend, UI and production build
 
 on:
   push:
-    branches: [main, feature-sharad]
+    branches: [main, feature-sharad, integration-ui-backend]
   pull_request:
 
 permissions:
@@ -44,6 +44,11 @@ jobs:
           /tmp/supplier-wheel/bin/python -m pip install --require-hashes -r backend/requirements.lock
           /tmp/supplier-wheel/bin/python -m pip install --no-deps dist/*.whl
           python scripts/production_smoke.py --python /tmp/supplier-wheel/bin/python --require-installed
+      - name: Browser integration checks
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium --only-shell
+          npm run test:e2e
       - name: Build and smoke-test production container
         run: |
           docker build -t supplier-risk-ci .

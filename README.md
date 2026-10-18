@@ -10,11 +10,11 @@ Python 3.11+ / FastAPI, React / TypeScript / Vite, Tailwind CSS. Nemotron via a 
 
 | Owner | Branch | Owns | Immediate next actions |
 |---|---|---|---|
-| **Sharad** | `feature-sharad` | `backend/`, provider integration, grounded chat, research, API contracts, backend deployment | Add local model/search credentials; run live smoke tests; integrate with Ekaterina |
-| **Ekaterina** | `feature-ekaterina` or her own feature branch | `frontend/`, explorer, comparison heatmap, chat/research views, demo presentation | Build the buyer workspace against `docs/API.md` and `docs/EKATERINA_HANDOFF.md` |
+| **Sharad** | `feature-sharad` | `backend/`, provider integration, grounded chat, research, API contracts, backend deployment | Configure Nemotron; run live model/research smoke; deploy the integrated app |
+| **Ekaterina** | `feature-ekaterina` | `frontend/`, explorer, comparison heatmap, chat/research views, demo presentation | Review the integrated buyer journey, polish the demo and record the walkthrough |
 | **Both** | Pull requests into `main` | API changes, deployment, jury access and submission | Agree any contract changes before editing shared API types; integrate early |
 
-The implementation on `feature-sharad` includes the supplier service, live model tool loop, cited research workflow, and explicit data-only mode. Ekaterina can build the UI against these stable contracts. The existing frontend is still a data-connection starter.
+`integration-ui-backend` combines the backend from `feature-sharad` with Ekaterina's buyer workspace from `feature-ekaterina`. It includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The combined app passes 69 backend checks and 16 browser integration checks. Both original feature branches remain available for review.
 
 Sharad edits backend files and documentation; Ekaterina edits frontend files. Do not commit API keys. Add your teammate as a repository collaborator and work through separate branches.
 
@@ -90,10 +90,11 @@ The model/search paths are tested with mocked provider responses. Actual Nemotro
 - Research reports distinguish unresolved company identity, partial evidence and a completed workflow; retain source dates, retrieval dates and explicit limitations.
 - Clear provider/configuration errors, timeouts, readiness checks and smoke-test commands.
 - Optional jury HTTP Basic login protecting the UI, API and API docs; configuration failures close access.
-- React starter with typed API client, Tailwind and live supplier data.
+- Buyer workspace with search/filtering, persistent shortlists, a 20-column risk heatmap, tied rankings, copyable justification, supplier profiles and metric definitions.
+- Chat and research views with exact evidence, linked sources, real error states and complete/partial/clarification report rendering.
 - Typed response schemas, a generated OpenAPI contract, locked dependencies, automated checks and a non-root Docker image definition for a single web service.
 
-The backend implementation is ready for frontend integration. UI features beyond the data connection, credential-backed live provider verification and final deployment remain. APIs and frontend expectations are documented in `docs/API.md` and `docs/EKATERINA_HANDOFF.md`; production instructions are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+The core UI and backend are integrated. Remaining delivery work is credential-backed live model/research verification, deployment, demo polish and recording. Tavily search/extraction has been verified live; Nemotron still needs a model API key. API details are in `docs/API.md`, the team handoff is in `docs/EKATERINA_HANDOFF.md`, and production instructions are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Three-hour build plan
 
@@ -144,7 +145,17 @@ npm --prefix frontend run build
 
 The tests cover real challenge data, 20-supplier comparisons, grounding checks, native provider HTTP contracts, partial research failures, authentication, malformed inputs and configuration errors. They use HTTP transport stubs for external providers and never spend API credits. [Verification details](docs/VERIFICATION.md) distinguish these checks from live API verification.
 
-The GitHub workflow in `.github/workflows/verify.yml` runs linting, tests, contract checks, both builds, a clean wheel smoke test, and a production container build/smoke test. Run `python scripts/export_openapi.py` after API schema changes.
+To run the browser checks after building the frontend:
+
+```bash
+cd frontend
+npx playwright install chromium --only-shell
+npm run test:e2e
+```
+
+These checks start a real Python server, use temporary jury credentials and clear all provider keys. Supplier, comparison and chat flows use the actual backend; successful research-report states use explicit API fixtures, while missing-model errors come from the real backend. They never consume model/search credits.
+
+The GitHub workflow in `.github/workflows/verify.yml` runs linting, tests, contract checks, both builds, browser integration checks, a clean wheel smoke test, and a production container build/smoke test. Run `python scripts/export_openapi.py` after API schema changes.
 
 ## Jury access and deployment
 

@@ -9,4 +9,6 @@
 **/.ruff_cache
 **/*.egg-info
 **/build
+**/test-results
+**/playwright-report
 

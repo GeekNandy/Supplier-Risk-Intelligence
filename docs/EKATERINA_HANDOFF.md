@@ -1,6 +1,10 @@
 # Ekaterina: frontend handoff
 
-You own the buyer workspace in `frontend/`. Sharad owns Python, model/search integration and the backend API. Your UI work can proceed without model credentials using the real supplier endpoints and the two supported data-only chat examples.
+You own the buyer workspace in `frontend/`. Sharad owns Python, model/search integration and the backend API. Your pushed UI has been combined with the backend on `integration-ui-backend` and verified with 16 browser checks, including real supplier/compare/chat requests under jury authentication. Successful research report variants are tested with explicit API fixtures; live synthesis still requires the model key.
+
+Integration fixes on that branch prevent stale comparisons after shortlist changes, disable selection of old rows while pages load, preserve the real unknown-supplier error, offer a fallback when clipboard copying is denied, and explain all-known-score ties accurately. Your original feature branch is unchanged.
+
+The feature lists below describe the implemented UI and remain useful as a demo checklist. Next steps are to review the combined branch, verify live AI after credentials are configured, deploy, and record the walkthrough.
 
 ## Start here
 
@@ -68,7 +72,7 @@ Sharad's backend now includes jury authentication, readiness checks, strict requ
 
 No custom login screen is needed for the hackathon: on the deployed same-origin app, the browser's HTTP Basic prompt handles jury login. For local UI development, leave both `JURY_USERNAME` and `JURY_PASSWORD` blank in your own `.env`. `GET /api/ready` is a public platform check; `/api/status` reports configuration only and does not prove provider connectivity.
 
-Next actions for you: finish the explorer/selection/heatmap, chat evidence UI and research source views, then merge the backend branch into your working branch and run the full buyer journey. Live model/search smoke testing still needs the team's provider keys.
+Next actions for you: review the integrated explorer/selection/heatmap, chat evidence UI and research source views, then polish and record the full buyer journey. Tavily search/extraction is verified; live model and full report testing still need Nemotron credentials.
 
 ## Demo journey
 
