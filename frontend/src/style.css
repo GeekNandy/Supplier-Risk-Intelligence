@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
-:root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #0f172a; background: #f5f8fa; }
+/* Design tokens: neutral grays, one warm accent, semantic risk colours elsewhere. */
+@theme {
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-accent: #ffd21e;
+  --color-accent-strong: #f5c400;
+  --color-accent-soft: #fff8db;
+}
+
+:root { color: var(--color-gray-900); background: #fff; font-family: var(--font-sans); }
 body { margin: 0; }
 
+/* Visible keyboard focus everywhere. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-gray-900);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

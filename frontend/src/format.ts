@@ -2,7 +2,7 @@ import type { Scalar, Supplier } from './api';
 
 /** "Financial_Health_Score" → "Financial health"; "Total_Risk_Index" → "Total risk index". */
 export function fieldLabel(field: string): string {
-  if (field === 'Total_Risk_Index') return 'Total risk index';
+  if (field === 'Total_Risk_Index') return 'Total Risk Index (as supplied)';
   const words = field.replace(/_Score$/, '').replace(/_Risk$/, '').replace(/_/g, ' ').trim();
   return words.charAt(0) + words.slice(1).toLowerCase();
 }
@@ -32,7 +32,7 @@ const LEVEL_STYLES: Record<string, { cell: string; badge: string }> = {
   High: { cell: 'bg-orange-200 text-orange-950', badge: 'bg-orange-100 text-orange-900 ring-orange-300' },
   Critical: { cell: 'bg-red-600 text-white', badge: 'bg-red-100 text-red-900 ring-red-300' },
 };
-const UNKNOWN_STYLE = { cell: 'bg-slate-100 text-slate-500', badge: 'bg-slate-100 text-slate-700 ring-slate-300' };
+const UNKNOWN_STYLE = { cell: 'bg-gray-100 text-gray-500', badge: 'bg-gray-100 text-gray-700 ring-gray-300' };
 
 export const levelStyle = (level: string | null) => (level && LEVEL_STYLES[level]) || UNKNOWN_STYLE;
 
