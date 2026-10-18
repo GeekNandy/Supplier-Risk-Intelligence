@@ -165,10 +165,9 @@ The GitHub workflow in `.github/workflows/verify.yml` runs linting, tests, contr
 
 The [live Render service](https://supplier-risk-intelligence-qghi.onrender.com)
 serves both React and FastAPI on the Free plan in Frankfurt. It checks
-`/api/ready`; its deploy policy is **After CI Checks Pass**. Automatic triggers
-require connecting Render’s GitHub app to this repository. Until that connection
-is authorized, wait for `main` CI to pass and use **Manual Deploy → Deploy latest
-commit** in Render. UI and backend updates use this same URL. The
+`/api/ready`. Render’s GitHub app is connected to this repository with the
+**After CI Checks Pass** policy. Merge UI and backend PRs into `main`; successful
+checks trigger an update to this same URL. The
 [Render Docker Blueprint](render.yaml) is a
 recreation template; the existing service was created directly and its settings
 are managed in Render. See the [deployment guide](docs/DEPLOYMENT.md#render-deployment).

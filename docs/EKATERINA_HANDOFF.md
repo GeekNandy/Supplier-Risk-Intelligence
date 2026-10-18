@@ -10,9 +10,9 @@ The feature lists below describe the implemented UI and remain useful as a demo 
 
 **Live buyer workspace:** https://supplier-risk-intelligence-qghi.onrender.com
 Sign in as `jury` with the password shared privately by Sharad. Further UI PRs
-should start from current `main`. Until Render’s GitHub app connection is
-authorized, wait for `main` CI and use Render’s **Manual Deploy → Deploy latest
-commit**. Once connected, the configured CI policy handles deploys automatically.
+should start from current `main`. Render’s GitHub app is connected to this
+repository; successful `main` CI checks automatically deploy merged changes to
+the existing URL. Open a PR for the latest UI restyle before the final recording.
 
 1. Start your next branch from the latest `main`; the old feature branch does not include the complete merged backend.
 2. Review the deployed buyer journey: filter suppliers, select three, compare, ask the financial-risk question, inspect a supplier profile, research a real company and open a cited source.

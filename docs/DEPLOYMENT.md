@@ -12,9 +12,10 @@ The existing service is `srv-dbaceslg1s2s73bjg3u0` in the team's **My Workspace*
 It was created directly from the repository through Render, with the private
 model/search keys and jury credentials configured on the service. Its Dashboard
 settings enable `/api/ready` and the **After CI Checks Pass** policy on `main`.
-The GitHub app connection still needs authorization before automatic deploys can
-trigger. Until then, merge changes, wait for `main` CI to pass, and use
-**Manual Deploy → Deploy latest commit** on this existing service. The Dashboard manages its settings;
+Render’s GitHub app is connected with access to only this project repository.
+After a PR merges, successful `main` checks trigger an automatic deploy to the
+existing URL. **Manual Deploy → Deploy latest commit** remains available for a
+manual redeploy after checks pass. The Dashboard manages its settings;
 the committed Blueprint remains a template for recreating the deployment.
 
 ### Recreate in another workspace

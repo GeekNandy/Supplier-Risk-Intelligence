@@ -29,9 +29,13 @@ The app is live at https://supplier-risk-intelligence-qghi.onrender.com on the
 Free plan in Frankfurt. Public HTTPS, the built UI/assets, supplier comparison
 and authenticated API docs passed real HTTP checks. Anonymous and incorrect
 credentials returned 401. Both challenge questions passed through the hosted
-Nemotron integration. Render confirms `/api/ready` and the CI-gated deploy policy;
-automatic triggering requires the GitHub app connection. The final code deploy
-was triggered manually after all checks passed.
+Nemotron integration. Render confirms `/api/ready` and the CI-gated deploy policy.
+The code-fix deploy was triggered manually after all checks passed. Render’s
+GitHub app was then connected with access to only this repository. Commit
+`3c69af7` subsequently became live with a `new_commit` trigger after its
+[main checks passed](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39133260611).
+Automatic updates are now connected; future UI/backend PRs deploy after merging
+and passing `main` CI.
 
 The first hosted research smoke exposed malformed model JSON. Research now sends
 the full Pydantic JSON schema in the provider's `response_format`, then validates
