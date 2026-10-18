@@ -10,7 +10,10 @@ from fastapi.staticfiles import StaticFiles
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 from app import data
-from app.models import ChatRequest, CompareRequest, ResearchRequest
+from app.chat import answer_question
+from app.models import ChatRequest, ChatResponse, CompareRequest, ResearchRequest, ResearchResponse
+from app.providers import ServiceError, Settings
+from app.research import research_company
 
 app = FastAPI(title="Supplier Risk Intelligence", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json", redoc_url=None)
 app.add_middleware(
@@ -24,6 +27,18 @@ app.add_middleware(
 @app.get("/api/health")
 def health():
     return {"status": "ok", "dataset_present": data.DATA_PATH.is_file()}
+
+
+@app.get("/api/status")
+def status():
+    settings = Settings.from_env()
+    return {
+        "chat_mode": "live" if settings.llm_ready else "data_only" if not settings.llm_api_key else "configuration_required",
+        "model_configured": settings.llm_ready,
+        "search_configured": bool(settings.tavily_api_key),
+        "research_ready": settings.llm_ready and bool(settings.tavily_api_key),
+        "model": settings.llm_model if settings.llm_ready else None,
+    }
 
 
 def data_call(function, *args, **kwargs):
@@ -59,14 +74,27 @@ def compare(request: CompareRequest):
     return data_call(data.compare_suppliers, request.supplier_ids, request.rank_by)
 
 
-@app.post("/api/chat")
-def chat(request: ChatRequest):
-    raise HTTPException(501, "Chat integration is not implemented in this starter. See app/chat.py and docs/API.md.")
+async def ai_call(function, request):
+    try:
+        return await function(request)
+    except ServiceError as error:
+        raise HTTPException(error.status_code, str(error)) from None
+    except FileNotFoundError:
+        raise HTTPException(503, "Dataset missing. Run python scripts/download_data.py.") from None
+    except KeyError as error:
+        raise HTTPException(404, f"Supplier not found: {error.args[0]}") from None
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from None
 
 
-@app.post("/api/research")
-def research(request: ResearchRequest):
-    raise HTTPException(501, "Research integration is not implemented in this starter. See app/research.py and docs/API.md.")
+@app.post("/api/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    return await ai_call(answer_question, request)
+
+
+@app.post("/api/research", response_model=ResearchResponse)
+async def research(request: ResearchRequest):
+    return await ai_call(research_company, request)
 
 
 # After `npm run build`, one Python process can also serve the frontend.
