@@ -1,21 +1,20 @@
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts';
 import type { Supplier } from './api';
-import { MONO } from './charts';
+import { MONO, tooltipStyle } from './charts';
 import { sortRows, type Dataset } from './dataset';
 import { fieldLabel, formatValue, LEVEL_ORDER } from './format';
 import { TOTAL_TIP } from './glossary';
 import type { Shortlist } from './shortlist';
 import { Card, EmptyState, InfoTip, inputClass, LevelBadge, ScoreBar, SectionLabel, ViewHeader } from './ui';
+import { levelColor, themeColors } from './theme';
 import { useWorkspace } from './workspace';
 
 // Semantic risk colours; each level also gets its own marker shape, and labels are always printed.
-const LEVEL_COLOR: Record<string, string> = { Low: '#16a34a', Medium: '#fbbf24', High: '#f97316', Critical: '#b91c1c' };
 const LEVEL_SHAPE: Record<string, 'circle' | 'square' | 'triangle' | 'diamond'> = { Low: 'circle', Medium: 'square', High: 'triangle', Critical: 'diamond' };
-const OTHER_COLORS = ['#374151', '#9ca3af', '#6b7280', '#d1d5db'];
-const colorFor = (level: string, index: number) => LEVEL_COLOR[level] ?? OTHER_COLORS[index % OTHER_COLORS.length];
+const colorFor = (level: string) => levelColor(level);
 const SCATTER_LIMIT = 2500;
-const tick = { fontSize: 11, fill: '#6b7280', fontFamily: MONO };
+const tick = () => ({ fontSize: 11, fill: themeColors().softText, fontFamily: MONO });
 
 export default function Overview({ dataset, shortlist }: { dataset: Dataset; shortlist: Shortlist }) {
   const { openSupplier } = useWorkspace();
@@ -141,12 +140,12 @@ function RiskMix({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
           <div style={{ height: 300 }} role="img" aria-label={`Stacked bar chart of risk levels by ${field}`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-                <CartesianGrid stroke="#e5e7eb" vertical={false} />
-                <XAxis dataKey="group" tick={{ fontSize: 12, fill: '#374151' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
-                <YAxis tick={tick} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: '#e5e7eb' }} />
+                <CartesianGrid stroke={themeColors().grid} vertical={false} />
+                <XAxis dataKey="group" tick={{ fontSize: 12, fill: themeColors().text }} tickLine={false} axisLine={{ stroke: themeColors().grid }} />
+                <YAxis tick={tick()} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip cursor={{ fill: themeColors().grid }} contentStyle={tooltipStyle()} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                {dataset.levels.map((level, index) => <Bar key={level} dataKey={level} stackId="levels" fill={colorFor(level, index)} isAnimationActive={false} />)}
+                {dataset.levels.map((level, index) => <Bar key={level} dataKey={level} stackId="levels" fill={colorFor(level)} isAnimationActive={false} />)}
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -203,13 +202,13 @@ function ScoreScatter({ dataset, rows, shortlist, onPick }: { dataset: Dataset; 
       <div style={{ height: 300 }} role="img" aria-label={`Scatter plot of ${fieldLabel(x)} against ${fieldLabel(y)}`}>
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 8, right: 12, bottom: 20, left: 0 }}>
-            <CartesianGrid stroke="#e5e7eb" />
-            <XAxis type="number" dataKey="x" name={fieldLabel(x)} domain={dataset.offScale.includes(x) ? ['auto', 'auto'] : [0, 100]} tick={tick} label={{ value: fieldLabel(x), position: 'insideBottom', offset: -12, fontSize: 12, fill: '#374151' }} />
-            <YAxis type="number" dataKey="y" name={fieldLabel(y)} domain={dataset.offScale.includes(y) ? ['auto', 'auto'] : [0, 100]} tick={tick} label={{ value: fieldLabel(y), angle: -90, position: 'insideLeft', offset: 12, fontSize: 12, fill: '#374151' }} />
+            <CartesianGrid stroke={themeColors().grid} />
+            <XAxis type="number" dataKey="x" name={fieldLabel(x)} domain={dataset.offScale.includes(x) ? ['auto', 'auto'] : [0, 100]} tick={tick()} label={{ value: fieldLabel(x), position: 'insideBottom', offset: -12, fontSize: 12, fill: themeColors().text }} />
+            <YAxis type="number" dataKey="y" name={fieldLabel(y)} domain={dataset.offScale.includes(y) ? ['auto', 'auto'] : [0, 100]} tick={tick()} label={{ value: fieldLabel(y), angle: -90, position: 'insideLeft', offset: 12, fontSize: 12, fill: themeColors().text }} />
             <ZAxis range={[18, 18]} />
             <Tooltip
               cursor={{ strokeDasharray: '3 3' }}
-              contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: '#e5e7eb' }}
+              contentStyle={tooltipStyle()}
               content={({ payload }) => {
                 const point = payload?.[0]?.payload as Point | undefined;
                 if (!point) return null;
@@ -225,11 +224,11 @@ function ScoreScatter({ dataset, rows, shortlist, onPick }: { dataset: Dataset; 
             />
             <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
             {series.map((item, index) => (
-              <Scatter key={item.level} name={item.level} data={item.points} fill={dataset.hasLevel ? colorFor(item.level, index) : '#6b7280'} fillOpacity={0.55}
+              <Scatter key={item.level} name={item.level} data={item.points} fill={dataset.hasLevel ? colorFor(item.level) : themeColors().neutral} fillOpacity={0.55}
                 shape={LEVEL_SHAPE[item.level] ?? 'circle'} onClick={click} cursor="pointer" isAnimationActive={false} />
             ))}
             {shortlisted.length > 0 && (
-              <Scatter name="Your shortlist (★)" data={shortlisted} fill="#ffd21e" stroke="#111827" strokeWidth={1.5} shape="star" legendType="star" onClick={click} cursor="pointer" isAnimationActive={false} />
+              <Scatter name="Your shortlist (★)" data={shortlisted} fill={themeColors().primary} stroke={themeColors().text} strokeWidth={1.5} shape="star" legendType="star" onClick={click} cursor="pointer" isAnimationActive={false} />
             )}
           </ScatterChart>
         </ResponsiveContainer>

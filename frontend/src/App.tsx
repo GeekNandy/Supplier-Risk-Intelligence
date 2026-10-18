@@ -11,7 +11,7 @@ import Overview from './Overview';
 import Research from './Research';
 import { MAX_SHORTLIST, useShortlist, type Shortlist } from './shortlist';
 import SupplierDetail from './SupplierDetail';
-import { EmptyState, ErrorBox, LevelBadge, primaryButton, secondaryButton, Skeleton, SkeletonRows, ViewHeader } from './ui';
+import { Btn, EmptyState, ErrorBox, LevelBadge, Skeleton, SkeletonRows, ViewHeader } from './ui';
 import { useWorkspace, WorkspaceContext } from './workspace';
 
 type Tab = 'overview' | 'explore' | 'compare' | 'ask' | 'research';
@@ -73,40 +73,27 @@ export default function App() {
 
   return (
     <WorkspaceContext.Provider value={workspace}>
-      <div className="min-h-screen bg-white pb-28">
+      <div className="min-h-screen pb-28">
         <header className="border-b border-gray-200 bg-white">
-          <div className="mx-auto max-w-[1200px] px-6 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent font-mono text-sm font-bold text-gray-900" aria-hidden>SR</span>
-                <div>
-                  <h1 className="text-lg font-semibold leading-tight tracking-tight text-gray-900">Supplier Risk Intelligence</h1>
-                  <p className="text-xs text-gray-500">Rail procurement · supplier risk</p>
-                </div>
+          <div className="mx-auto max-w-[1200px] px-6 pt-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="sri-label">Rail procurement · Supplier risk</p>
+                <h1 className="mt-1 text-2xl font-semibold text-gray-900">Supplier Risk Intelligence</h1>
+                <p className="mt-1 text-xs text-gray-500">Built for the Siemens Supplier Risk Intelligence challenge</p>
               </div>
               <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
                 <DataIndicator dataset={dataset} onSwitch={() => setLoaderOpen(true)} />
-                <button className={primaryButton} onClick={() => setLoaderOpen(true)}>Load your data</button>
+                <Btn variant="primary" onClick={() => setLoaderOpen(true)}>Load your data</Btn>
                 <Glossary />
               </div>
             </div>
-            <nav className="mt-3 flex gap-6 overflow-x-auto" aria-label="Workspace">
-              {TABS.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => go(item.id)}
-                  aria-current={tab === item.id ? 'page' : undefined}
-                  className={`-mb-px whitespace-nowrap border-b-2 px-0.5 pb-2.5 pt-1 text-[15px] transition-colors ${tab === item.id ? 'border-accent font-semibold text-gray-900' : 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900'}`}
-                >
-                  {item.label}
-                  {item.id === 'compare' && shortlist.ids.length > 0 && <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 font-mono text-xs text-gray-700">{shortlist.ids.length}</span>}
-                </button>
-              ))}
-            </nav>
           </div>
+          <TrainBand />
+          <RouteNav tab={tab} onGo={go} shortlistCount={shortlist.ids.length} />
         </header>
 
-        <main className="mx-auto max-w-[1200px] px-6 py-6">
+        <main className="mx-auto max-w-[1200px] px-6 py-8">
           <Guide onStep={go} onLoad={() => setLoaderOpen(true)} />
           {notice && (
             <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-700" role="status">
@@ -136,7 +123,7 @@ export default function App() {
                 {canAsk ? <Chat shortlist={shortlist} status={status} onAddIds={addIds} draft={chatDraft} /> : (
                   <>
                     <ViewHeader title="Ask about the data" purpose="Ask plain-language questions; answers cite the exact supplier, field and value." />
-                    <EmptyState title="Ask works on the demo dataset" action={<button className={secondaryButton} onClick={useDemo}>Switch to demo dataset</button>}>
+                    <EmptyState title="Ask works on the demo dataset" action={<Btn variant="secondary" onClick={useDemo}>Switch to demo dataset</Btn>}>
                       Your uploaded file stays in this browser and is never sent to the server or a model, so the assistant cannot read it. Use Overview, Explore and Compare for your file.
                     </EmptyState>
                   </>
@@ -153,6 +140,89 @@ export default function App() {
         {loaderOpen && <LoadData templateColumns={demoTemplate} onLoaded={onLoaded} onUseDemo={useDemo} onClose={() => setLoaderOpen(false)} isDemo={dataset?.kind === 'demo'} />}
       </div>
     </WorkspaceContext.Provider>
+  );
+}
+
+const TAB_HINTS: Record<Tab, string> = {
+  overview: 'Risk at a glance',
+  explore: 'Search & shortlist',
+  compare: 'Rank & justify',
+  ask: 'Grounded Q&A',
+  research: 'Real-company check',
+};
+
+/** Tabs drawn as a route line: stations joined by a track, the current station in the primary colour. */
+function RouteNav({ tab, onGo, shortlistCount }: { tab: Tab; onGo: (tab: Tab) => void; shortlistCount: number }) {
+  return (
+    <nav className="mx-auto max-w-[1200px] overflow-x-auto px-6 pb-4 pt-2" aria-label="Workspace">
+      <ol className="relative grid min-w-[640px] grid-cols-5">
+        <span className="absolute left-[10%] right-[10%] top-[11px] h-0.5 bg-gray-300" aria-hidden />
+        {TABS.map(item => {
+          const active = tab === item.id;
+          return (
+            <li key={item.id} className="relative flex justify-center">
+              <button
+                onClick={() => onGo(item.id)}
+                aria-current={active ? 'page' : undefined}
+                className="group flex flex-col items-center gap-1.5 rounded px-2 pb-1 text-center"
+              >
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${active ? 'border-accent bg-accent' : 'border-gray-400 bg-[var(--theme-color-2)] group-hover:border-accent'}`}
+                  aria-hidden
+                >
+                  <span className={`h-2 w-2 rounded-full ${active ? 'bg-on-accent' : 'bg-transparent group-hover:bg-accent'}`} />
+                </span>
+                <span className={`text-sm ${active ? 'font-bold text-accent' : 'font-semibold text-gray-800 group-hover:text-gray-900'}`}>
+                  {item.label}
+                  {item.id === 'compare' && shortlistCount > 0 && <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 font-mono text-xs text-gray-700">{shortlistCount}</span>}
+                </span>
+                <span className="text-xs text-gray-500">{TAB_HINTS[item.id]}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+/** Decorative line drawing: catenary, a three-car train and sleepers on a track. Hand-drawn, no external assets. */
+function TrainBand() {
+  return (
+    <div className="mx-auto max-w-[1200px] px-6" aria-hidden>
+      <svg viewBox="0 0 1200 56" className="block h-12 w-full text-accent" preserveAspectRatio="xMaxYMid meet" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <defs>
+          <pattern id="sleepers" width="18" height="8" patternUnits="userSpaceOnUse">
+            <line x1="4" y1="0" x2="4" y2="8" strokeOpacity="0.35" />
+          </pattern>
+        </defs>
+        {/* Overhead line and masts */}
+        <line x1="0" y1="6" x2="1200" y2="6" strokeOpacity="0.35" />
+        {[120, 420, 720, 1020].map(x => <path key={x} d={`M${x} 2 V48 M${x} 6 H${x + 14}`} strokeOpacity="0.25" />)}
+        {/* Track */}
+        <rect x="0" y="44" width="1200" height="8" fill="url(#sleepers)" stroke="none" />
+        <line x1="0" y1="45" x2="1200" y2="45" strokeOpacity="0.6" />
+        <line x1="0" y1="51" x2="1200" y2="51" strokeOpacity="0.35" />
+        {/* Train: two cars and a power car with nose, windows, bogies and pantograph */}
+        <g strokeOpacity="0.9">
+          {[690, 850].map(x => (
+            <g key={x}>
+              <rect x={x} y="18" width="152" height="22" rx="3" />
+              {[0, 1, 2, 3, 4, 5].map(i => <rect key={i} x={x + 10 + i * 23} y="22" width="15" height="7" rx="1" strokeOpacity="0.7" />)}
+              <circle cx={x + 22} cy="41.5" r="2.5" /><circle cx={x + 34} cy="41.5" r="2.5" />
+              <circle cx={x + 118} cy="41.5" r="2.5" /><circle cx={x + 130} cy="41.5" r="2.5" />
+            </g>
+          ))}
+          <path d="M1010 40 V18 H1110 C1138 18 1156 26 1168 40 Z" />
+          <path d="M1118 22 H1132 L1146 32 H1118 Z" strokeOpacity="0.7" />
+          {[0, 1, 2].map(i => <rect key={i} x={1020 + i * 26} y="22" width="18" height="7" rx="1" strokeOpacity="0.7" />)}
+          <line x1="1010" y1="34" x2="1160" y2="34" strokeOpacity="0.5" />
+          <circle cx="1032" cy="41.5" r="2.5" /><circle cx="1044" cy="41.5" r="2.5" />
+          <circle cx="1124" cy="41.5" r="2.5" /><circle cx="1136" cy="41.5" r="2.5" />
+          <path d="M1040 18 L1052 9 L1064 18 M1046 9 H1058" />
+        </g>
+      </svg>
+    </div>
   );
 }
 
@@ -178,12 +248,12 @@ function LoadingView() {
 
 function DataIndicator({ dataset, onSwitch }: { dataset: Dataset | null; onSwitch: () => void }) {
   return (
-    <div className="flex min-w-0 max-w-full items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm">
-      <span className="text-gray-500">Data:</span>
+    <div className="flex min-h-8 min-w-0 max-w-full items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 py-1 text-sm">
+      <span className="sri-label">Data</span>
       {dataset
         ? <span className="min-w-0 max-w-80 truncate font-medium text-gray-900" title={dataset.label}>{dataset.label} · <span className="font-mono">{dataset.rows.length.toLocaleString()}</span> rows</span>
         : <span className="text-gray-500">loading…</span>}
-      <button className="font-medium text-gray-900 underline hover:no-underline" onClick={onSwitch}>Switch</button>
+      <button className="font-bold text-accent underline underline-offset-2 hover:no-underline" onClick={onSwitch}>Switch</button>
     </div>
   );
 }
@@ -198,9 +268,9 @@ function Glossary() {
   }, [open]);
   return (
     <div className="relative">
-      <button className={secondaryButton} onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="glossary-panel">Glossary</button>
+      <Btn variant="secondary" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="glossary-panel">Glossary</Btn>
       {open && (
-        <div id="glossary-panel" className="absolute right-0 z-30 mt-2 w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
+        <div id="glossary-panel" className="absolute right-0 z-30 mt-2 w-80 rounded border border-gray-300 bg-[var(--theme-color-3)] p-4 shadow-lg">
           <dl className="space-y-3 text-sm">
             {GLOSSARY.map(item => (
               <div key={item.term}><dt className="font-semibold text-gray-900">{item.term}</dt><dd className="text-gray-600">{item.definition}</dd></div>
@@ -223,12 +293,12 @@ function Guide({ onStep, onLoad }: { onStep: (tab: Tab) => void; onLoad: () => v
     { label: 'Research a real company', action: () => onStep('research') },
   ];
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white px-4 py-3 text-sm">
+    <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2 rounded border border-gray-200 bg-white px-4 py-3 text-sm">
       <span className="font-semibold text-gray-900">How to use this</span>
       <ol className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {steps.map((step, index) => (
           <li key={step.label} className="flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent font-mono text-xs font-semibold text-gray-900">{index + 1}</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-accent font-mono text-xs font-semibold text-accent">{index + 1}</span>
             <button className="text-gray-800 underline-offset-2 hover:underline" onClick={step.action}>{step.label}</button>
             {index === 0 && <button className="text-xs text-gray-500 underline" onClick={onLoad}>(upload CSV)</button>}
             {index < steps.length - 1 && <span className="text-gray-300" aria-hidden>→</span>}
@@ -243,7 +313,7 @@ function Guide({ onStep, onLoad }: { onStep: (tab: Tab) => void; onLoad: () => v
 function ShortlistTray({ shortlist, onCompare }: { shortlist: Shortlist; onCompare?: () => void }) {
   const { openSupplier } = useWorkspace();
   return (
-    <aside className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 backdrop-blur" aria-label="Shortlist">
+    <aside className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white" aria-label="Shortlist">
       <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-6 py-3">
         <div className="shrink-0">
           <p className="text-sm font-semibold text-gray-900">Shortlist</p>
@@ -260,7 +330,7 @@ function ShortlistTray({ shortlist, onCompare }: { shortlist: Shortlist; onCompa
           ))}
         </ul>
         {shortlist.items.length > 0 && <button onClick={shortlist.clear} className="shrink-0 text-sm text-gray-600 underline hover:text-red-700">Clear</button>}
-        {onCompare && <button className={`${primaryButton} shrink-0`} disabled={!shortlist.items.length} onClick={onCompare}>Compare {shortlist.items.length || ''} →</button>}
+        {onCompare && <Btn variant="primary" className="shrink-0" disabled={!shortlist.items.length} onClick={onCompare}>Compare {shortlist.items.length || ''} →</Btn>}
       </div>
     </aside>
   );
@@ -269,7 +339,7 @@ function ShortlistTray({ shortlist, onCompare }: { shortlist: Shortlist; onCompa
 function HowItWorks({ status }: { status: Status | null }) {
   const model = status?.model ?? null;
   return (
-    <details className="mt-10 rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white px-5 py-3 text-sm text-gray-700">
+    <details className="mt-12 rounded border border-gray-200 bg-white px-6 py-4 text-sm text-gray-700">
       <summary className="cursor-pointer font-semibold text-gray-900">How it works</summary>
       <ul className="mt-3 list-disc space-y-1.5 pl-5">
         <li><strong>Overview, Explore & Compare</strong> run in your browser on the loaded dataset. Scores and risk levels are shown as supplied; the Total Risk Index is never recalculated and its weights are not known. Uploaded files never leave the browser.</li>

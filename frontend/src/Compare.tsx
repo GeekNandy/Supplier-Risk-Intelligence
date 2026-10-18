@@ -4,7 +4,7 @@ import { RiskRadar, ScoreBars } from './charts';
 import { compareRows, downloadText, toCsv, type Dataset } from './dataset';
 import { fieldLabel, formatValue, levelOf, levelStyle, OPERATIONAL_FIELDS } from './format';
 import type { Shortlist } from './shortlist';
-import { Card, EmptyState, inputClass, LevelBadge, primaryButton, secondaryButton, Tip, defId, ViewHeader, WarningBox } from './ui';
+import { Btn, Card, defId, EmptyState, inputClass, LevelBadge, Tip, ViewHeader, WarningBox } from './ui';
 import { useWorkspace } from './workspace';
 
 /** Shortlist question for the chosen metric; keywords match the data-only mode's supported criteria. */
@@ -38,7 +38,7 @@ export default function Compare({ dataset, shortlist, onExplore, onAsk, canAsk }
     return (
       <>
         <ViewHeader title="Compare suppliers" purpose="See your shortlist side by side, pick the metric that matters and get a lowest-risk answer with its trade-offs." />
-        <EmptyState title="Your shortlist is empty" action={<button className={primaryButton} onClick={onExplore}>Go to Explore</button>}>
+        <EmptyState title="Your shortlist is empty" action={<Btn variant="primary" onClick={onExplore}>Go to Explore</Btn>}>
           Tick 2–20 suppliers in Explore (or open a supplier profile and click “Add to shortlist”), then come back here.
         </EmptyState>
       </>
@@ -50,7 +50,7 @@ export default function Compare({ dataset, shortlist, onExplore, onAsk, canAsk }
       <ViewHeader
         title="Compare suppliers"
         purpose="See your shortlist side by side, pick the metric that matters and get a lowest-risk answer with its trade-offs."
-        actions={<button className={secondaryButton} onClick={download}>Download shortlist (CSV)</button>}
+        actions={<Btn variant="secondary" onClick={download}>Download shortlist (CSV)</Btn>}
       />
       <label className="flex w-fit flex-col gap-1 text-xs font-medium text-gray-600">
         Rank shortlist by
@@ -88,7 +88,7 @@ function RadarSection({ dataset, comparison }: { dataset: Dataset; comparison: C
       actions={!offScale && (
         <div className="flex rounded-md ring-1 ring-gray-300" role="group" aria-label="Chart type">
           {(['radar', 'bars'] as const).map(option => (
-            <button key={option} onClick={() => setView(option)} aria-pressed={view === option} className={`px-3 py-1.5 text-sm first:rounded-l-md last:rounded-r-md ${view === option ? 'bg-accent font-semibold text-gray-900' : 'bg-white text-gray-700 hover:bg-gray-50'}`}>
+            <button key={option} onClick={() => setView(option)} aria-pressed={view === option} className={`px-3 py-1.5 text-sm first:rounded-l-md last:rounded-r-md ${view === option ? 'bg-accent font-semibold text-on-accent' : 'bg-white text-gray-700 hover:bg-gray-50'}`}>
               {option === 'radar' ? 'Radar' : 'Show as bars'}
             </button>
           ))}
@@ -201,8 +201,8 @@ function DecisionView({ comparison, onAsk }: { comparison: Comparison; onAsk?: (
       subtitle={`${suppliers.length} supplier${suppliers.length === 1 ? '' : 's'} ranked by ${fieldLabel(field)} · lower score = lower risk`}
       actions={
         <div className="flex gap-2">
-          <button className={secondaryButton} onClick={copy}>{copied ? 'Copied ✓' : 'Copy summary'}</button>
-          {onAsk && <button className={secondaryButton} onClick={() => onAsk(shortlistQuestion(field))} title={shortlistQuestion(field)}>Ask about this ranking →</button>}
+          <Btn variant="secondary" onClick={copy}>{copied ? 'Copied ✓' : 'Copy summary'}</Btn>
+          {onAsk && <Btn variant="secondary" onClick={() => onAsk(shortlistQuestion(field))} title={shortlistQuestion(field)}>Ask about this ranking →</Btn>}
         </div>
       }
     >

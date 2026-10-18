@@ -4,7 +4,7 @@ import { compareRows, type Dataset } from './dataset';
 import { fieldLabel, formatValue, levelOf, OPERATIONAL_FIELDS } from './format';
 import { TOTAL_TIP } from './glossary';
 import type { Shortlist } from './shortlist';
-import { InfoTip, LevelBadge, Pill, primaryButton, ScoreBar, secondaryButton, SectionLabel } from './ui';
+import { Btn, InfoTip, LevelBadge, Pill, ScoreBar, secondaryButton, SectionLabel } from './ui';
 import { useWorkspace } from './workspace';
 
 /** Side panel ("model card") with one supplier's full supplied profile, read from the loaded dataset. */
@@ -68,13 +68,13 @@ export default function SupplierDetail({ id, dataset, shortlist, onClose }: { id
                     </p>
                   </div>
                 ) : <p className="text-sm text-gray-600">This file has no Total Risk Index column, so none is shown (it is never calculated).</p>}
-                <button
-                  className={selected ? secondaryButton : primaryButton}
+                <Btn
+                  variant={selected ? 'secondary' : 'primary'}
                   disabled={!selected && shortlist.full}
                   onClick={() => (selected ? shortlist.remove(id) : shortlist.addMany([supplier]))}
                 >
                   {selected ? 'Remove from shortlist' : shortlist.full ? 'Shortlist full (20)' : 'Add to shortlist'}
-                </button>
+                </Btn>
               </div>
 
               {top.length > 0 && (

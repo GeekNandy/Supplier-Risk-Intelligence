@@ -1,23 +1,100 @@
+/* iX sits below Tailwind's utilities so layout classes always win over iX globals. */
+@layer theme, base, ix, components, utilities;
+@import "@siemens/ix/dist/siemens-ix/siemens-ix.css" layer(ix);
 @import "tailwindcss";
 
-/* Design tokens: neutral grays, one warm accent, semantic risk colours elsewhere. */
+/*
+ * Design tokens. Every colour the components use resolves to a Siemens iX theme variable
+ * (classic theme, dark schema), so components never hard-code hex values.
+ * Tailwind's palette names are kept as aliases so existing utility classes follow the theme.
+ */
 @theme {
-  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --color-accent: #ffd21e;
-  --color-accent-strong: #f5c400;
-  --color-accent-soft: #fff8db;
+  --font-sans: var(--theme-font-sans), Arial, Helvetica, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--theme-font-code), ui-monospace, Consolas, "Cascadia Mono", Menlo, monospace;
+
+  --color-white: var(--theme-color-2);
+  --color-gray-50: var(--theme-color-component-1);
+  --color-gray-100: var(--theme-color-ghost--hover);
+  --color-gray-200: var(--theme-color-x-weak-bdr);
+  --color-gray-300: var(--theme-color-weak-bdr);
+  --color-gray-400: var(--theme-color-soft-bdr);
+  --color-gray-500: var(--theme-color-soft-text);
+  --color-gray-600: var(--theme-color-soft-text);
+  --color-gray-700: var(--theme-color-std-text);
+  --color-gray-800: var(--theme-color-std-text);
+  --color-gray-900: var(--theme-color-contrast-text);
+
+  --color-accent: var(--theme-color-primary);
+  --color-accent-strong: var(--theme-color-primary--hover);
+  --color-accent-soft: var(--theme-color-ghost--selected);
+  --color-on-accent: var(--theme-color-primary--contrast);
+
+  /* Semantic risk colours: success / warning / critical / alarm. */
+  --color-emerald-50: color-mix(in srgb, var(--theme-color-success) 12%, transparent);
+  --color-emerald-100: color-mix(in srgb, var(--theme-color-success) 18%, transparent);
+  --color-emerald-200: color-mix(in srgb, var(--theme-color-success) 40%, transparent);
+  --color-emerald-300: color-mix(in srgb, var(--theme-color-success) 55%, transparent);
+  --color-emerald-700: var(--theme-color-success);
+  --color-emerald-800: var(--theme-color-success);
+  --color-emerald-900: var(--theme-color-success);
+  --color-emerald-950: var(--theme-color-success);
+  --color-amber-50: color-mix(in srgb, var(--theme-color-warning) 12%, transparent);
+  --color-amber-100: color-mix(in srgb, var(--theme-color-warning) 18%, transparent);
+  --color-amber-200: color-mix(in srgb, var(--theme-color-warning) 40%, transparent);
+  --color-amber-300: color-mix(in srgb, var(--theme-color-warning) 55%, transparent);
+  --color-amber-400: var(--theme-color-primary);
+  --color-amber-500: var(--theme-color-primary);
+  --color-amber-700: var(--theme-color-warning);
+  --color-amber-800: var(--theme-color-warning);
+  --color-amber-900: var(--theme-color-warning);
+  --color-amber-950: var(--theme-color-warning);
+  --color-orange-100: color-mix(in srgb, var(--theme-color-critical) 18%, transparent);
+  --color-orange-200: color-mix(in srgb, var(--theme-color-critical) 30%, transparent);
+  --color-orange-300: color-mix(in srgb, var(--theme-color-critical) 55%, transparent);
+  --color-orange-900: var(--theme-color-critical);
+  --color-orange-950: var(--theme-color-critical);
+  --color-red-50: color-mix(in srgb, var(--theme-color-alarm) 12%, transparent);
+  --color-red-100: color-mix(in srgb, var(--theme-color-alarm) 18%, transparent);
+  --color-red-200: color-mix(in srgb, var(--theme-color-alarm) 40%, transparent);
+  --color-red-300: color-mix(in srgb, var(--theme-color-alarm) 55%, transparent);
+  --color-red-600: var(--theme-color-alarm);
+  --color-red-700: var(--theme-color-alarm);
+  --color-red-900: var(--theme-color-alarm);
 }
 
-:root { color: var(--color-gray-900); background: #fff; font-family: var(--font-sans); }
-body { margin: 0; }
+:root {
+  color: var(--theme-color-std-text);
+  background: var(--theme-color-1);
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+body { margin: 0; background: var(--theme-color-1); }
 
-/* Visible keyboard focus everywhere. */
+/* Text fields and selects share the iX input look (native elements keep their <label>s). */
+.sri-field {
+  background-color: var(--theme-input--background);
+  border: var(--theme-input--border-thickness, 1px) solid var(--theme-input--border-color);
+  border-radius: var(--theme-input--border-radius);
+  color: var(--theme-input--color);
+  font: inherit;
+  min-height: 2rem;
+  padding: 0.25rem 0.5rem;
+}
+.sri-field:hover:not(:disabled) { background-color: var(--theme-input--background--hover); border-color: var(--theme-input--border-color--hover); }
+.sri-field:focus { border-color: var(--theme-input--border-color--focus); outline: 1px solid var(--theme-color-focus-bdr); outline-offset: 0; }
+.sri-field::placeholder { color: var(--theme-color-weak-text); }
+.sri-field:disabled { opacity: 0.6; cursor: not-allowed; }
+select.sri-field option, select.sri-field optgroup { background: var(--theme-color-2); color: var(--theme-color-std-text); }
+
+/* Visible keyboard focus everywhere (iX focus colour). */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-gray-900);
+  outline: 2px solid var(--theme-color-focus-bdr);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* Keep absolutely positioned descendants (e.g. sr-only labels) inside scroll containers. */
 .overflow-x-auto, .overflow-auto { position: relative; }
+
+/* Small uppercase label used across cards. */
+.sri-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--theme-color-soft-text); }

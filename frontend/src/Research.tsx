@@ -1,12 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError, type ResearchResponse, type Severity, type Source, type Status } from './api';
-import { AiError, Card, inputClass, Pill, primaryButton, secondaryButton, Spinner, ViewHeader, WarningBox } from './ui';
+import { AiError, Btn, Card, InfoLine, inputClass, Pill, primaryButton, Spinner, ViewHeader, WarningBox } from './ui';
 
 const SEVERITY_ORDER: Severity[] = ['critical', 'high', 'medium', 'low', 'unknown'];
 const SEVERITY_STYLE: Record<Severity, string> = {
   critical: 'bg-red-600 text-white',
   high: 'bg-orange-100 text-orange-900 ring-1 ring-orange-300',
-  medium: 'bg-amber-100 text-amber-900 ring-1 ring-amber-300',
+  medium: 'bg-amber-100 text-amber-900 ring-1 ring-amber-400',
   low: 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300',
   unknown: 'bg-gray-100 text-gray-700 ring-1 ring-gray-300',
 };
@@ -75,56 +75,78 @@ export default function Research({ status }: { status: Status | null }) {
   const configError = error instanceof ApiError && error.status === 503;
   const openSample = sample ? () => { setError(undefined); setReport({ data: sample, sample: true }); } : undefined;
 
+  const blockedReason = notConfigured ? 'Research needs model and search credentials on the server.' : companyName.trim().length < 2 ? 'Enter a company name first.' : undefined;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <ViewHeader title="Research a real company" purpose="Name a real supplier; the agent searches public sources and news, follows up on red flags and returns a report with source links." />
-      <div className="text-sm text-gray-600">
-        Real companies only, kept separate from the anonymized SUPP_ data: no risk score is assigned and no match to a SUPP_ supplier is made.{' '}
-        <details className="inline">
-          <summary className="inline cursor-pointer font-medium text-gray-900 underline">Learn more</summary>
-          <span className="mt-1 block text-gray-600">The report contains labels, counts and cited sources only. Severity words are the model's reading of the cited sources; open each source to verify it. Absence of negative news does not mean low risk.</span>
-        </details>
-      </div>
+      <InfoLine more="The report contains labels, counts and cited sources only. Severity words are the model's reading of the cited sources; open each source to verify it. Absence of negative news does not mean low risk.">
+        Real-company research uses public sources only — never matched to anonymized SUPP_ suppliers, no numeric score.
+      </InfoLine>
 
       {(notConfigured || configError) && (
         <WarningBox
-          title="Live research is not available on this server"
-          action={openSample && <button className={secondaryButton} onClick={openSample}>Open the sample report</button>}
+          title="Live research is not configured"
+          action={openSample && <Btn variant="secondary" onClick={openSample}>Open the sample report</Btn>}
         >
-          {missing.length ? <>Missing: {missing.join(' and ')}.</> : <>The server could not start research{error instanceof Error ? `: ${error.message}` : '.'}</>}{' '}
-          Ask your admin to add these on the server{sample ? ', or open the cached sample report.' : '. No cached sample report is available in this build.'}
+          {missing.length ? <>Missing on the server: {missing.join(' and ')}. Ask your admin to add these credentials.</> : <>The server could not start research{error instanceof Error ? `: ${error.message}` : '.'}</>}
+          {!sample && ' No cached sample report is available in this build.'}
           {configError && missing.length > 0 && <span className="mt-1 block text-xs">Server response: {(error as Error).message}</span>}
         </WarningBox>
       )}
 
-      <Card title="Company">
-        <form onSubmit={run} className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)_auto] md:items-end">
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
-            Company name (required)
-            <input className={inputClass} required minLength={2} maxLength={200} value={companyName} onChange={event => setCompanyName(event.target.value)} placeholder="e.g. Knorr-Bremse AG" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
-            Country (optional)
-            <input className={inputClass} maxLength={100} value={country} onChange={event => setCountry(event.target.value)} placeholder="Germany" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
-            Official website (optional)
-            <input className={inputClass} type="url" maxLength={500} value={website} onChange={event => setWebsite(event.target.value)} placeholder="https://www.knorr-bremse.com" />
-          </label>
-          <button type="submit" disabled={pending || companyName.trim().length < 2} className={primaryButton}>
-            {pending ? 'Researching…' : 'Research'}
-          </button>
-        </form>
-        {pending && (
-          <div className="mt-4 rounded-lg bg-gray-50 px-4 py-3">
-            <Spinner label={`Researching ${companyName.trim()}… ${elapsed}s elapsed`} />
-            <p className="mt-1 text-xs text-gray-500">This can take up to two minutes. The steps the agent actually took are shown when the report returns.</p>
-          </div>
-        )}
-        {error && !configError ? <div className="mt-4"><AiError error={error} feature="Company research" onRetry={() => void run()} /></div> : null}
-      </Card>
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="space-y-8">
+          <Card title="Company to research" subtitle="Only the name is required; country and website help the agent find the right legal entity.">
+            <form onSubmit={run} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+              <label className="flex flex-col gap-1">
+                <span className="sri-label">Company name (required)</span>
+                <input className={inputClass} required minLength={2} maxLength={200} value={companyName} onChange={event => setCompanyName(event.target.value)} placeholder="e.g. Knorr-Bremse AG" />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="sri-label">Country (optional)</span>
+                <input className={inputClass} maxLength={100} value={country} onChange={event => setCountry(event.target.value)} placeholder="Germany" />
+              </label>
+              <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
+                <span className="sri-label">Official website (optional)</span>
+                <input className={inputClass} type="url" maxLength={500} value={website} onChange={event => setWebsite(event.target.value)} placeholder="https://www.knorr-bremse.com" />
+              </label>
+              <span className="flex items-end" title={pending ? undefined : blockedReason}>
+                <button type="submit" disabled={pending || !!blockedReason} className={`${primaryButton} w-full`} aria-describedby={blockedReason ? 'research-blocked' : undefined}>
+                  {pending ? 'Researching…' : 'Research'}
+                </button>
+              </span>
+              {blockedReason && !pending && <span id="research-blocked" className="text-xs text-gray-500 sm:col-span-2">{blockedReason}</span>}
+            </form>
+            {pending && (
+              <div className="mt-4 rounded bg-gray-50 px-4 py-3">
+                <Spinner label={`Researching ${companyName.trim()}… ${elapsed}s elapsed`} />
+                <p className="mt-1 text-xs text-gray-500">This can take up to two minutes. The steps the agent actually took are shown when the report returns.</p>
+              </div>
+            )}
+            {error && !configError ? <div className="mt-4"><AiError error={error} feature="Company research" onRetry={() => void run()} /></div> : null}
+          </Card>
+          {report && <Report report={report.data} sample={report.sample} />}
+        </div>
 
-      {report && <Report report={report.data} sample={report.sample} />}
+        <aside className="rounded border border-gray-200 bg-white p-6 text-sm" aria-label="How research works">
+          <p className="sri-label">How it works</p>
+          <ol className="mt-3 space-y-3">
+            {[
+              ['Identify', 'Searches for the company using the country and website hints to pin down the legal entity.'],
+              ['Plan & search', 'Plans up to two risk searches and reads the most relevant public pages and news.'],
+              ['Follow up', 'Runs one extra search on a red flag that needs checking.'],
+              ['Report', 'Keeps only findings that cite a retrieved source and lists what could not be checked.'],
+            ].map(([step, text], index) => (
+              <li key={step} className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent font-mono text-xs text-accent">{index + 1}</span>
+                <span><strong className="block text-gray-900">{step}</strong><span className="text-gray-600">{text}</span></span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-4 border-t border-gray-200 pt-3 text-xs text-gray-500">Takes up to two minutes. Model: {status?.model ? <span className="font-mono">{status.model}</span> : 'not configured'}.</p>
+        </aside>
+      </div>
     </div>
   );
 }

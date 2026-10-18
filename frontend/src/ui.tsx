@@ -1,14 +1,32 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { IxButton, IxMessageBar, IxPill } from '@siemens/ix-react';
+import { iconError, iconSuccess, iconWarning, iconWarningRhomb } from '@siemens/ix-icons/icons';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ApiError } from './api';
-import { levelStyle } from './format';
+
+// Dataset level -> iX status variant + icon, so a level is never shown by colour alone.
+const LEVEL_PILL: Record<string, { variant: 'success' | 'warning' | 'critical' | 'alarm'; icon: string }> = {
+  Low: { variant: 'success', icon: iconSuccess },
+  Medium: { variant: 'warning', icon: iconWarning },
+  High: { variant: 'critical', icon: iconWarningRhomb },
+  Critical: { variant: 'alarm', icon: iconError },
+};
 
 export function LevelBadge({ level }: { level: string | null }) {
+  const style = level ? LEVEL_PILL[level] : undefined;
   return (
-    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${levelStyle(level).badge}`}>
+    <IxPill variant={style?.variant ?? 'neutral'} icon={style?.icon} outline={!style} className="align-middle">
       {level ?? 'Unknown'}
-    </span>
+    </IxPill>
   );
+}
+
+type BtnProps = Omit<ComponentProps<typeof IxButton>, 'variant'> & { variant?: 'primary' | 'secondary' | 'tertiary'; title?: string };
+
+/** iX button. A title is shown on a wrapper so the tooltip also works while the button is disabled. */
+export function Btn({ variant = 'secondary', title, children, ...props }: BtnProps) {
+  const button = <IxButton variant={variant} {...props}>{children}</IxButton>;
+  return title ? <span title={title} className="inline-flex">{button}</span> : button;
 }
 
 /** 0–100 risk score as a number plus a bar; the bar is decorative, the number is the data. */
@@ -16,9 +34,9 @@ export function ScoreBar({ value }: { value: number | null }) {
   if (value === null) return <span className="text-gray-500">Unknown</span>;
   return (
     <span className="flex items-center gap-2">
-      <span className="w-7 text-right font-semibold tabular-nums">{value}</span>
-      <span className="h-1.5 w-16 overflow-hidden rounded-full bg-gray-200" aria-hidden>
-        <span className="block h-full rounded-full bg-gray-700" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+      <span className="w-7 text-right font-mono font-semibold tabular-nums">{value}</span>
+      <span className="h-1.5 w-16 overflow-hidden rounded-full bg-gray-100" aria-hidden>
+        <span className="block h-full rounded-full bg-gray-500" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
       </span>
     </span>
   );
@@ -27,7 +45,7 @@ export function ScoreBar({ value }: { value: number | null }) {
 export function Spinner({ label }: { label: string }) {
   return (
     <span role="status" className="inline-flex items-center gap-2 text-sm text-gray-600">
-      <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" aria-hidden />
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-accent" aria-hidden />
       {label}
     </span>
   );
@@ -36,19 +54,21 @@ export function Spinner({ label }: { label: string }) {
 export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const message = error instanceof Error ? error.message : String(error);
   return (
-    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-      <span>{message}</span>
-      {onRetry && <button onClick={onRetry} className="rounded-md bg-white px-3 py-1 font-medium ring-1 ring-red-300 hover:bg-red-100">Retry</button>}
-    </div>
+    <IxMessageBar type="alarm" persistent>
+      <span className="flex flex-wrap items-center justify-between gap-3">
+        <span>{message}</span>
+        {onRetry && <Btn variant="secondary" onClick={onRetry}>Retry</Btn>}
+      </span>
+    </IxMessageBar>
   );
 }
 
 /** Shown when a contracted AI route returns 501/404 because the backend has not shipped it. */
 export function Unavailable({ feature }: { feature: string }) {
   return (
-    <div role="status" className="rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+    <IxMessageBar type="info" persistent>
       <strong className="font-semibold">{feature} is temporarily unavailable.</strong> The server has not enabled this route yet. Supplier search and comparison keep working.
-    </div>
+    </IxMessageBar>
   );
 }
 
@@ -59,17 +79,17 @@ export function AiError({ error, feature, onRetry }: { error: unknown; feature: 
 
 export function Card({ title, subtitle, actions, children, className = '' }: { title?: ReactNode; subtitle?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white transition-colors hover:border-gray-300 ${className}`}>
+    <section className={`rounded border border-gray-200 bg-white transition-colors hover:border-gray-300 ${className}`}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
           <div>
-            {title && <h2 className="text-lg font-semibold text-gray-900">{title}</h2>}
-            {subtitle && <p className="mt-0.5 text-sm text-gray-600">{subtitle}</p>}
+            {title && <h2 className="text-base font-semibold text-gray-900">{title}</h2>}
+            {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
           </div>
           {actions}
         </header>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-6">{children}</div>
     </section>
   );
 }
@@ -98,7 +118,7 @@ export function Tip({ id, text, children }: { id: string; text?: string; childre
       {anchor && createPortal(
         <span
           aria-hidden
-          className="pointer-events-none fixed z-50 w-64 rounded-md bg-gray-900 px-3 py-2 text-xs leading-snug text-white shadow-lg"
+          className="pointer-events-none fixed z-50 w-64 rounded border border-gray-300 bg-[var(--theme-color-4)] px-3 py-2 text-xs leading-snug text-gray-900 shadow-lg"
           style={{ left: Math.min(anchor.right + 8, window.innerWidth - 272), top: anchor.top }}
         >
           {text}
@@ -109,22 +129,19 @@ export function Tip({ id, text, children }: { id: string; text?: string; childre
   );
 }
 
-export const inputClass = 'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900/10';
-export const primaryButton = 'rounded-md bg-accent px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-amber-400 hover:bg-accent-strong disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 disabled:ring-gray-200';
-export const secondaryButton = 'rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-800 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50';
+export const inputClass = 'sri-field text-sm';
+// Native buttons kept for form submission, styled to match ix-button.
+export const primaryButton = 'inline-flex min-h-8 items-center justify-center rounded bg-accent px-4 py-1.5 text-sm font-bold text-on-accent hover:bg-accent-strong disabled:cursor-not-allowed disabled:bg-[var(--theme-color-primary--disabled)] disabled:text-gray-500';
+export const secondaryButton = 'inline-flex min-h-8 items-center justify-center rounded border border-accent px-3 py-1.5 text-sm font-bold text-accent hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50';
 
 /** Small uppercase section label used in "model-card" layouts. */
 export function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{children}</p>;
+  return <p className="sri-label">{children}</p>;
 }
 
 export function Pill({ children, tone = 'gray', mono = false }: { children: ReactNode; tone?: 'gray' | 'accent' | 'sample'; mono?: boolean }) {
-  const tones = {
-    gray: 'bg-gray-100 text-gray-700 ring-gray-200',
-    accent: 'bg-accent-soft text-gray-900 ring-amber-300',
-    sample: 'bg-amber-100 text-amber-950 ring-amber-400',
-  };
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${tones[tone]} ${mono ? 'font-mono' : ''}`}>{children}</span>;
+  const variant = tone === 'accent' ? 'primary' : tone === 'sample' ? 'warning' : 'neutral';
+  return <IxPill variant={variant} outline={tone === 'gray'} className={mono ? 'font-mono' : ''}>{children}</IxPill>;
 }
 
 /** ⓘ trigger with a definition tooltip; keyboard focusable. */
@@ -132,14 +149,14 @@ export function InfoTip({ id, text, label = 'More information' }: { id: string; 
   return (
     <span className="inline-block align-middle">
       <Tip id={id} text={text}>
-        <button type="button" className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-semibold text-gray-500 ring-1 ring-gray-300 hover:text-gray-900" aria-label={label} aria-describedby={id}>i</button>
+        <button type="button" className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-semibold normal-case text-gray-500 ring-1 ring-gray-300 hover:text-accent" aria-label={label} aria-describedby={id}>i</button>
       </Tip>
     </span>
   );
 }
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-gray-200/70 ${className}`} aria-hidden />;
+  return <div className={`animate-pulse rounded bg-gray-100 ${className}`} aria-hidden />;
 }
 
 export function SkeletonRows({ rows = 6 }: { rows?: number }) {
@@ -152,7 +169,7 @@ export function SkeletonRows({ rows = 6 }: { rows?: number }) {
 
 export function EmptyState({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-gray-300 px-6 py-10 text-center">
+    <div className="rounded border border-dashed border-gray-300 px-6 py-12 text-center">
       <p className="font-semibold text-gray-900">{title}</p>
       {children && <div className="mx-auto mt-1 max-w-xl text-sm text-gray-600">{children}</div>}
       {action && <div className="mt-4">{action}</div>}
@@ -160,26 +177,42 @@ export function EmptyState({ title, children, action }: { title: string; childre
   );
 }
 
-/** Amber warning: what is missing and what to do. */
+/** iX warning message: what is missing and what to do. */
 export function WarningBox({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div role="alert" className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-      <div>
-        <p className="font-semibold">⚠ {title}</p>
-        {children && <div className="mt-0.5">{children}</div>}
-      </div>
-      {action}
-    </div>
+    <IxMessageBar type="warning" persistent>
+      <span className="flex flex-wrap items-start justify-between gap-4">
+        <span>
+          <strong className="block font-bold">{title}</strong>
+          {children && <span className="mt-1 block">{children}</span>}
+        </span>
+        {action}
+      </span>
+    </IxMessageBar>
+  );
+}
+
+/** Slim one-line iX info message with an expandable "Learn more". */
+export function InfoLine({ children, more }: { children: ReactNode; more?: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <IxMessageBar type="info" persistent>
+      <span>
+        {children}
+        {more && <> <button type="button" className="font-bold text-accent underline underline-offset-2" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Show less' : 'Learn more'}</button></>}
+      </span>
+      {open && more && <span className="mt-1 block text-gray-600">{more}</span>}
+    </IxMessageBar>
   );
 }
 
 /** Title + one-sentence purpose line used at the top of each view. */
 export function ViewHeader({ title, purpose, actions }: { title: string; purpose: string; actions?: ReactNode }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-gray-900">{title}</h2>
-        <p className="mt-1 text-gray-600">{purpose}</p>
+        <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
+        <p className="mt-1 text-sm text-gray-600">{purpose}</p>
       </div>
       {actions}
     </div>

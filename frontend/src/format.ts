@@ -27,12 +27,12 @@ export const LEVEL_ORDER = ['Low', 'Medium', 'High', 'Critical'];
 
 // Colour only encodes the dataset's own level label; text always carries the label too.
 const LEVEL_STYLES: Record<string, { cell: string; badge: string }> = {
-  Low: { cell: 'bg-emerald-100 text-emerald-950', badge: 'bg-emerald-100 text-emerald-900 ring-emerald-300' },
-  Medium: { cell: 'bg-amber-100 text-amber-950', badge: 'bg-amber-100 text-amber-900 ring-amber-300' },
-  High: { cell: 'bg-orange-200 text-orange-950', badge: 'bg-orange-100 text-orange-900 ring-orange-300' },
-  Critical: { cell: 'bg-red-600 text-white', badge: 'bg-red-100 text-red-900 ring-red-300' },
+  Low: { cell: 'bg-emerald-100 text-gray-900', badge: 'bg-emerald-100 text-gray-900 ring-emerald-300' },
+  Medium: { cell: 'bg-amber-100 text-gray-900', badge: 'bg-amber-100 text-gray-900 ring-amber-300' },
+  High: { cell: 'bg-orange-200 text-gray-900', badge: 'bg-orange-200 text-gray-900 ring-orange-300' },
+  Critical: { cell: 'bg-red-300 text-gray-900', badge: 'bg-red-300 text-gray-900 ring-red-300' },
 };
-const UNKNOWN_STYLE = { cell: 'bg-gray-100 text-gray-500', badge: 'bg-gray-100 text-gray-700 ring-gray-300' };
+const UNKNOWN_STYLE = { cell: 'bg-gray-50 text-gray-500', badge: 'bg-gray-50 text-gray-700 ring-gray-300' };
 
 export const levelStyle = (level: string | null) => (level && LEVEL_STYLES[level]) || UNKNOWN_STYLE;
 

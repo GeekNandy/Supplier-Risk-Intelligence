@@ -3,7 +3,7 @@ import {
   autoMap, buildDataset, downloadText, MAX_UPLOAD_BYTES, numericColumns, parseCsv, saveMapping, savedMapping, templateCsv, validate,
   type Dataset, type Mapping, type RawTable,
 } from './dataset';
-import { inputClass, primaryButton, secondaryButton, SectionLabel } from './ui';
+import { Btn, inputClass, secondaryButton, SectionLabel } from './ui';
 
 type Props = {
   templateColumns: string[];
@@ -77,7 +77,7 @@ export function DropZone({ onFile, compact = false }: { onFile: (file: File | un
     >
       <p className="font-semibold text-gray-900">Drop a CSV file here</p>
       <p className="mt-1 text-sm text-gray-600">or</p>
-      <button className={`${primaryButton} mt-2`} onClick={() => input.current?.click()}>Choose file…</button>
+      <Btn variant="primary" className="mt-2" onClick={() => input.current?.click()}>Choose file…</Btn>
       <input ref={input} type="file" accept=".csv,text/csv" className="sr-only" onChange={event => { onFile(event.target.files?.[0]); event.target.value = ''; }} aria-label="Choose CSV file" />
       <p className="mt-2 text-xs text-gray-500">CSV with a header row · up to 10 MB · one row per supplier</p>
     </div>
@@ -90,8 +90,8 @@ function Choose({ onFile, error, templateColumns, onUseDemo, isDemo }: { onFile:
       <DropZone onFile={onFile} />
       {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-900">{error}</p>}
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-        <button className={secondaryButton} onClick={() => downloadText('supplier-risk-template.csv', templateCsv(templateColumns))}>Download template CSV</button>
-        <button className={secondaryButton} onClick={onUseDemo} disabled={isDemo}>{isDemo ? 'Demo dataset is loaded' : 'Use demo dataset'}</button>
+        <Btn variant="secondary" onClick={() => downloadText('supplier-risk-template.csv', templateCsv(templateColumns))}>Download template CSV</Btn>
+        <Btn variant="secondary" onClick={onUseDemo} disabled={isDemo}>{isDemo ? 'Demo dataset is loaded' : 'Use demo dataset'}</Btn>
       </div>
       <p className="text-xs text-gray-500">Only a supplier ID column is required. Risk level, Total Risk Index, country and category are optional; anything missing is hidden, never calculated.</p>
     </div>
@@ -177,10 +177,10 @@ function MapColumns({ table, mapping, setMapping, onBack, onConfirm }: { table: 
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4">
-        <button className={secondaryButton} onClick={onBack}>← Choose another file</button>
-        <button className={primaryButton} disabled={check.errors.length > 0} onClick={onConfirm}>
-          {check.warnings.length ? 'Continue with warnings' : 'Load data'} · <span className="font-mono">{table.rows.length.toLocaleString()}</span> rows
-        </button>
+        <Btn variant="secondary" onClick={onBack}>← Choose another file</Btn>
+        <Btn variant="primary" disabled={check.errors.length > 0} onClick={onConfirm}>
+          {check.warnings.length ? 'Continue with warnings' : 'Load data'} · {table.rows.length.toLocaleString()} rows
+        </Btn>
       </div>
     </div>
   );

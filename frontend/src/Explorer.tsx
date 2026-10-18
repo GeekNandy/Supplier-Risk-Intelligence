@@ -4,7 +4,7 @@ import { sortRows, type Dataset } from './dataset';
 import { fieldLabel, formatValue, levelOf, OPERATIONAL_FIELDS } from './format';
 import { TOTAL_TIP } from './glossary';
 import type { Shortlist } from './shortlist';
-import { Card, EmptyState, InfoTip, inputClass, LevelBadge, ScoreBar, secondaryButton, ViewHeader } from './ui';
+import { Btn, Card, EmptyState, InfoTip, inputClass, LevelBadge, ScoreBar, ViewHeader } from './ui';
 import { useWorkspace } from './workspace';
 
 const PAGE_SIZE = 25;
@@ -82,14 +82,14 @@ export default function Explorer({ dataset, shortlist }: { dataset: Dataset; sho
           <p className="text-gray-700" aria-live="polite">
             <strong className="font-mono">{total.toLocaleString()}</strong> suppliers match{total > 0 && <> · showing <span className="font-mono">{offset + 1}–{to}</span></>}
           </p>
-          <button className={secondaryButton} disabled={!selectableOnPage.length || shortlist.full} onClick={() => shortlist.addMany(selectableOnPage)} title="Adds unselected suppliers on this page until the 20-supplier limit">
+          <Btn variant="secondary" disabled={!selectableOnPage.length || shortlist.full} onClick={() => shortlist.addMany(selectableOnPage)} title="Adds unselected suppliers on this page until the 20-supplier limit">
             Add page to shortlist
-          </button>
+          </Btn>
         </div>
 
         {total === 0 ? (
           <div className="mt-3">
-            <EmptyState title="No suppliers match these filters" action={<button className={secondaryButton} onClick={() => { setQuery(''); setRiskLevel(''); }}>Clear search and level</button>}>
+            <EmptyState title="No suppliers match these filters" action={<Btn variant="secondary" onClick={() => { setQuery(''); setRiskLevel(''); }}>Clear search and level</Btn>}>
               Try a shorter ID, or show all risk levels.
             </EmptyState>
           </div>
@@ -118,9 +118,9 @@ export default function Explorer({ dataset, shortlist }: { dataset: Dataset; sho
 
         {total > PAGE_SIZE && (
           <nav className="mt-4 flex items-center justify-between text-sm" aria-label="Pagination">
-            <button className={secondaryButton} disabled={offset === 0} onClick={() => goToOffset(Math.max(0, offset - PAGE_SIZE))}>← Previous</button>
+            <Btn variant="secondary" disabled={offset === 0} onClick={() => goToOffset(Math.max(0, offset - PAGE_SIZE))}>← Previous</Btn>
             <span className="text-gray-600">Page <span className="font-mono">{Math.floor(offset / PAGE_SIZE) + 1}</span> of <span className="font-mono">{Math.ceil(total / PAGE_SIZE).toLocaleString()}</span></span>
-            <button className={secondaryButton} disabled={to >= total} onClick={() => goToOffset(offset + PAGE_SIZE)}>Next →</button>
+            <Btn variant="secondary" disabled={to >= total} onClick={() => goToOffset(offset + PAGE_SIZE)}>Next →</Btn>
           </nav>
         )}
       </Card>

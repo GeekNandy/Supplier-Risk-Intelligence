@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, type ChatResponse, type Status } from './api';
 import { fieldLabel, formatValue } from './format';
 import type { Shortlist } from './shortlist';
-import { AiError, Card, inputClass, primaryButton, secondaryButton, Spinner } from './ui';
+import { AiError, Btn, Card, inputClass, primaryButton, Spinner } from './ui';
 import { useWorkspace } from './workspace';
 
 const EXAMPLES = [
@@ -79,7 +79,7 @@ export default function Chat({ shortlist, status, onAddIds, draft }: { shortlist
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Try</p>
           <div className="mt-1.5 flex flex-wrap gap-2">
             {EXAMPLES.map(example => (
-              <button key={example} disabled={pending} onClick={() => void ask(example)} className="rounded-full bg-accent-soft px-3 py-1 text-left text-sm text-gray-900 ring-1 ring-amber-300 hover:bg-accent-soft disabled:opacity-50">
+              <button key={example} disabled={pending} onClick={() => void ask(example)} className="rounded-full bg-accent-soft px-3 py-1 text-left text-sm text-gray-900 ring-1 ring-amber-400 hover:bg-accent-soft disabled:opacity-50">
                 {example}
               </button>
             ))}
@@ -155,16 +155,16 @@ function TurnView({ turn, shortlist, onAddIds, onRetry, retryDisabled }: { turn:
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-gray-600">Suggested:</span>
                 {response.suggested_supplier_ids.map(id => (
-                  <span key={id} className={`rounded px-2 py-0.5 font-mono text-xs font-semibold ring-1 ${shortlist.has(id) ? 'bg-accent-soft text-gray-900 ring-amber-300' : 'bg-gray-50 ring-gray-200'}`}>{id}{shortlist.has(id) && ' ✓'}</span>
+                  <span key={id} className={`rounded px-2 py-0.5 font-mono text-xs font-semibold ring-1 ${shortlist.has(id) ? 'bg-accent-soft text-gray-900 ring-amber-400' : 'bg-gray-50 ring-gray-200'}`}>{id}{shortlist.has(id) && ' ✓'}</span>
                 ))}
                 {newSuggestions.length > 0 && (
-                  <button
-                    className={secondaryButton}
+                  <Btn
+                    variant="secondary"
                     disabled={shortlist.items.length + newSuggestions.length > 20}
                     onClick={() => onAddIds(newSuggestions).catch(reason => setAddError(reason instanceof Error ? reason.message : String(reason)))}
                   >
                     Add {newSuggestions.length} to shortlist
-                  </button>
+                  </Btn>
                 )}
                 {addError && <span className="text-red-700">{addError}</span>}
               </div>
