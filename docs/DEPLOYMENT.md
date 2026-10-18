@@ -118,8 +118,11 @@ Set these secrets/settings in the host dashboard:
 | `REQUIRE_LIVE_AI` | `true` |
 | `CORS_ORIGINS` | Your deployed HTTPS origin if needed |
 
-Use the host's HTTPS URL. Share jury credentials in the submission's private
-credential field. Local `.env` is neither committed nor copied into the image.
+Use the host's HTTPS URL. The existing hackathon demo has access instructions in
+[JURY_ACCESS.md](../JURY_ACCESS.md); its username and password are supplied directly
+in the submitted project description.
+For a separate private deployment, distribute its credentials privately.
+Local `.env` is neither committed nor copied into the image.
 GitHub Actions secrets do not automatically configure a deployed server.
 
 Docker sets `APP_ROOT=/app`, runs as a non-root user, and probes `/api/ready`.

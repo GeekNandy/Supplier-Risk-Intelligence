@@ -47,9 +47,9 @@ HTTPS checks repeated on 18 October 2026 confirmed:
 - Anonymous access to the application returns 401.
 - The configured jury credentials return 200 for the application, both built assets, `/api/status`, `/api/docs` and a supplier-list request.
 - `/api/status` reports live chat, research configuration and `nvidia/Nemotron-3.5-Super-VL`. Configuration status alone does not make a new paid inference request.
-- The private jury access note contains the currently configured password. Distribution to judges still requires the team's private submission handoff; the password is absent from the public repository.
+- The private jury access note contains the currently configured password. The team confirms that the working username and password are included directly in the submitted project description. Public access instructions are in the root README and `JURY_ACCESS.md`; the password and provider API keys are excluded from the public repository.
 
-The refined UI was also checked in a fresh hosted browser session before the recording: twenty-supplier comparison, live Nemotron chat, cited Knorr-Bremse research and mobile profiles completed without browser page errors. The original served CSV matched its source SHA-256. Research returned a partial report with evidence limitations retained. Historical verification entries below describe earlier commits and runs; the final video URL is not yet available in the repository.
+The refined UI was also checked in a fresh hosted browser session before the recording: twenty-supplier comparison, live Nemotron chat, cited Knorr-Bremse research and mobile profiles completed without browser page errors. The original served CSV matched its source SHA-256. Research returned a partial report with evidence limitations retained. Historical verification entries below describe earlier commits and runs; the team confirms the Loom video was submitted with the hackathon entry; its URL has not yet been copied into the repository.
 
 ## Performance and cost checks
 
@@ -122,8 +122,7 @@ available, so the actual image check ran on GitHub's runner.
 Tavily and Nemotron were subsequently verified with supplied credentials in this workspace.
 The keys are stored only in a gitignored, owner-readable `.env`; they are not part of
 the repository. The hosted service has its own private environment settings.
-MCP was verified through direct protocol calls;
-this does not register native Tavily tools in the current ChatGPT session.
+Tavily MCP was verified separately through direct protocol calls; the application uses the documented Search and Extract HTTP APIs.
 
 The live model configuration is `https://api.tokenfactory.nebius.com/v1/` with
 `nvidia/Nemotron-3.5-Super-VL` and

@@ -8,13 +8,13 @@ Built for the Siemens Smart Supplier Selection for Trains challenge.
 - **Live app:** https://supplier-risk-intelligence-qghi.onrender.com/
 - **Repository:** https://github.com/GeekNandy/Supplier-Risk-Intelligence
 - **Branch:** `main` contains the integrated backend and refined frontend. Render follows `main` after GitHub Actions passes.
-- **Username:** `jury`. Enter the password provided separately with the submission's judge access details in the browser's native login prompt. The same login protects the API and its interactive documentation.
+- **Username:** `jury`. **Password:** supplied directly in the submitted project description under **Login credentials for the Jury members**. Enter those credentials in the browser's native login prompt. The same login opens the API and its interactive documentation. See [access instructions](../JURY_ACCESS.md).
 - **API documentation:** https://supplier-risk-intelligence-qghi.onrender.com/api/docs
-- **Video:** final two-minute recording link pending; the submission must include it separately until added here.
+- **Video:** the team confirms the two-minute Loom recording has been submitted with the hackathon entry; its URL has not yet been copied here.
 
 The Render Free service can take about a minute to wake after inactivity. Keep the page open during startup. No provider accounts or API keys are needed to evaluate the hosted app.
 
-**Team submission handoff:** include both the username and the current password in the submission's private access details, or deliver them directly to the organizers. The password is configured and verified on the live service, but is intentionally absent from this public repository. Do not substitute a model/search API key for the jury password.
+**Submission access:** the team confirms that the username and working password are included directly in the submitted project description. The README and `JURY_ACCESS.md` also link the live app and explain where judges receive the password. Provider API keys remain private and are not needed by judges.
 
 ## Challenge coverage
 

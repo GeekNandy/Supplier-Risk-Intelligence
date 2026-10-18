@@ -2,16 +2,24 @@
 
 Siemens hackathon project: explore and compare supplier risk, ask grounded questions, and research real companies with cited evidence.
 
-**Live app:** [Supplier Risk Intelligence](https://supplier-risk-intelligence-qghi.onrender.com)
-— sign in as `jury` using the password supplied separately in the submission's
-judge access details. The browser displays a native login prompt. The same
-service hosts the UI and API; `/api/docs` requires that login too. Allow about a
-minute for the Free service to wake after inactivity.
+## Judge demo access
+
+- **Live app:** https://supplier-risk-intelligence-qghi.onrender.com/
+- **Username:** `jury`
+- **Password:** provided in the submitted project description under “Login credentials for the Jury members.”
+- **Copyable login details:** [JURY_ACCESS.md](JURY_ACCESS.md)
+
+These access instructions are for the hackathon demo. The browser displays a native
+login prompt; the same login opens the UI, API and `/api/docs`. No provider API
+keys are needed. Allow about a minute for the Free service to wake after inactivity.
+
+**Demo video:** the Loom recording has been submitted with the hackathon entry;
+its URL has not yet been copied into this README.
 
 **Judges: start with the [evaluation guide](docs/JUDGES.md)** for challenge
 coverage, example questions, research inputs, evidence limitations and technical
 documentation. All application code is integrated into `main`, the branch used
-by the live service. The final two-minute video link is still pending.
+by the live service.
 
 ## Stack
 
@@ -205,7 +213,7 @@ Configure jury access in your own terminal:
 python scripts/configure_jury.py
 ```
 
-The password prompts are hidden, require confirmation, and preserve existing API keys. Restart the server afterward. Local development can leave both jury variables blank. For deployment, set `JURY_USERNAME`, `JURY_PASSWORD` (at least 12 characters), `REQUIRE_JURY_AUTH=true`, and `REQUIRE_LIVE_AI=true` through your host's secret settings. Use HTTPS and share jury credentials privately.
+The password prompts are hidden, require confirmation, and preserve existing API keys. Restart the server afterward. Local development can leave both jury variables blank. For deployment, set `JURY_USERNAME`, `JURY_PASSWORD` (at least 12 characters), `REQUIRE_JURY_AUTH=true`, and `REQUIRE_LIVE_AI=true` through your host's secret settings. Use HTTPS. This hackathon demo uses the judge login provided in the submission; keep provider API keys private.
 
 The production Docker image builds React and serves it from FastAPI under one origin. From the repository root:
 
@@ -224,10 +232,10 @@ For local production verification without Docker, build `frontend`, then restart
 - [x] Repository contains all code/data and reproducible setup instructions.
 - [x] Deployed URL verified from a fresh browser session.
 - [x] Jury login and credentials verified over HTTPS.
-- [ ] Two-minute video: filter → compare three suppliers → ask a risk question → research a real company.
+- [x] Two-minute Loom demo submitted with the hackathon entry (team confirmation).
 - [x] README updated with the live app URL.
 - [x] Judge evaluation guide and technical documentation linked from the README.
-- [ ] Include the working jury username and password in private submission access details or deliver them directly to the organizers; a README reference alone does not deliver the password.
+- [x] Working jury username and password included directly in the submitted project description (team confirmation); README and `JURY_ACCESS.md` provide access instructions.
 - [ ] README updated with the final video link.
 
 Submission deadline supplied by the organizers: **18:30 Berlin time, 18 October 2026**. Reserve time for the deployed walkthrough and video upload.
