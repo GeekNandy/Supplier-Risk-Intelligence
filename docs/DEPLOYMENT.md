@@ -11,8 +11,10 @@ local model server, NVIDIA GPU, n8n or Devin account is required.
 The existing service is `srv-dbaceslg1s2s73bjg3u0` in the team's **My Workspace**.
 It was created directly from the repository through Render, with the private
 model/search keys and jury credentials configured on the service. Its Dashboard
-settings enable `/api/ready` and **After CI Checks Pass** on `main`. Merging UI or
-backend changes updates this same service. The Dashboard manages its settings;
+settings enable `/api/ready` and the **After CI Checks Pass** policy on `main`.
+The GitHub app connection still needs authorization before automatic deploys can
+trigger. Until then, merge changes, wait for `main` CI to pass, and use
+**Manual Deploy → Deploy latest commit** on this existing service. The Dashboard manages its settings;
 the committed Blueprint remains a template for recreating the deployment.
 
 ### Recreate in another workspace
@@ -39,8 +41,10 @@ its CI checks pass. No database or persistent disk is created.
    the URL in a fresh browser session and sign in as `jury` using the configured
    password.
 
-For automatic updates, connect the repository to Render and leave auto-deploys
-set to **After CI Checks Pass**. Ekaterina's UI changes then deploy after merging
+For automatic updates, install/connect [Render’s GitHub app](https://github.com/apps/render)
+for this repository and leave auto-deploys set to **After CI Checks Pass**. Review
+the app’s requested permissions and choose **Only select repositories**.
+Ekaterina's UI changes then deploy after merging
 to `main` and passing the existing workflow. The Blueprint is intended for this
 team-owned service; a separate fork/clone should review its linked repository
 and update policy before creating an instance.
