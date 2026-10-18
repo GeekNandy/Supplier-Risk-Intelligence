@@ -364,7 +364,7 @@ function Heatmap({ comparison, rankBy, onRankBy, onRemove }: { comparison: Compa
                 </tr>
               );
             })}
-            <tr><td colSpan={ordered.length + 1} className="pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Operational indicators · own direction, not 0–100 risk scores</td></tr>
+            {operational.length > 0 && <tr><td colSpan={ordered.length + 1} className="pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Operational indicators · own direction, not 0–100 risk scores</td></tr>}
             {operational.map(({ field, hint }) => (
               <tr key={field}>
                 <th className={`${stickyHead} pr-3 text-left font-normal`}>

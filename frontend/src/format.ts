@@ -1,10 +1,10 @@
 import type { Scalar, Supplier } from './api';
 
-/** "Financial_Health_Score" → "Financial health"; "Total_Risk_Index" → "Total risk index". */
+/** "Financial_Health_Score" → "Financial health"; acronyms such as ESG keep their capitals. */
 export function fieldLabel(field: string): string {
   if (field === 'Total_Risk_Index') return 'Total Risk Index (as supplied)';
-  const words = field.replace(/_Score$/, '').replace(/_Risk$/, '').replace(/_/g, ' ').trim();
-  return words.charAt(0) + words.slice(1).toLowerCase();
+  const words = field.replace(/_Score$/i, '').replace(/_Risk$/, '').replace(/_/g, ' ').trim().split(/\s+/);
+  return words.map((word, index) => (/^[A-Z]{2,}$/.test(word) ? word : index === 0 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase())).join(' ');
 }
 
 export function formatValue(value: Scalar | undefined, field?: string): string {

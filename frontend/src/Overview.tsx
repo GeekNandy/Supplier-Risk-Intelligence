@@ -121,7 +121,7 @@ function RiskMix({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
     <Card
       title="Risk-level mix"
       subtitle={field ? `Suppliers per ${field}, split by supplied risk level.` : 'Suppliers per group, split by supplied risk level.'}
-      actions={dataset.groupFields.length > 1 && (
+      actions={dataset.hasLevel && dataset.groupFields.length > 1 && (
         <label className="flex items-center gap-2 text-xs text-gray-600">
           Group by
           <select className={`${inputClass} py-1`} value={field} onChange={event => setGroupBy(event.target.value)}>

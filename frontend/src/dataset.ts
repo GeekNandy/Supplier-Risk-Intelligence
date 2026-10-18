@@ -60,7 +60,7 @@ export function parseNumber(value: string | undefined | null): number | null {
 const isBlank = (value: string | undefined) => value === undefined || value.trim() === '';
 
 export function parseCsv(text: string, fileName: string): RawTable {
-  const result = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: 'greedy', transformHeader: header => header.trim() });
+  const result = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: true, transformHeader: header => header.trim() });
   const columns = (result.meta.fields ?? []).filter(Boolean);
   const rows = result.data.filter(row => columns.some(column => !isBlank(row[column])));
   return { fileName, columns, rows, skippedEmpty: result.data.length - rows.length };
