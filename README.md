@@ -10,13 +10,13 @@ Python 3.11+ / FastAPI, React / TypeScript / Vite, Tailwind CSS. Nemotron via a 
 
 | Owner | Branch | Owns | Immediate next actions |
 |---|---|---|---|
-| **Sharad** | `feature-sharad` | `backend/`, provider integration, grounded chat, research, API contracts, backend deployment | Configure Nemotron; run live model/research smoke; deploy the integrated app |
-| **Ekaterina** | `feature-ekaterina` | `frontend/`, explorer, comparison heatmap, chat/research views, demo presentation | Review the integrated buyer journey, polish the demo and record the walkthrough |
-| **Both** | Pull requests into `main` | API changes, deployment, jury access and submission | Agree any contract changes before editing shared API types; integrate early |
+| **Sharad** | Backend PRs from `main` | `backend/`, provider integration, grounded chat, research, API contracts, backend deployment | Backend and live AI are verified; deploy the integrated app and verify jury access at the public URL |
+| **Ekaterina** | UI/demo PRs from `main` | `frontend/`, explorer, comparison heatmap, chat/research views, demo presentation | Review the integrated buyer journey, polish the demo and record the walkthrough |
+| **Both** | Pull requests into `main` | Deployment, jury access and submission | Publish the live URL, verify the full buyer journey, and submit repository/video/access details |
 
-`integration-ui-backend` combines the backend from `feature-sharad` with Ekaterina's buyer workspace from `feature-ekaterina`. It includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The combined app passes 69 backend checks and 16 browser integration checks. Both original feature branches remain available for review.
+PR #2 merged the backend and Ekaterina's latest buyer workspace into `main`; PR #1 was automatically marked merged because all its commits were included. The app includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The combined app passes 80 backend checks and 16 browser integration checks. Start further work from current `main`; both original feature branches remain available for history.
 
-Sharad edits backend files and documentation; Ekaterina edits frontend files. Do not commit API keys. Add your teammate as a repository collaborator and work through separate branches.
+Sharad edits backend files and documentation; Ekaterina edits frontend files. Do not commit API keys. Work through separate branches based on current `main`.
 
 ## Quick start
 
@@ -50,7 +50,7 @@ For an interactive setup with hidden key prompts:
 python scripts/configure_ai.py
 ```
 
-Create your provider keys first; follow [the detailed external-services setup guide](docs/EXTERNAL_SETUP.md). The command preserves unrelated `.env` settings and lets you keep existing keys by pressing Enter. It configures the local app; it does not create provider accounts, redeem credits or verify access. The wizard starts with the older Nemotron 3 Super example; enter the endpoint and model below to use the live-verified Nemotron 3.5 Super VL configuration.
+Create your provider keys first; follow [the detailed external-services setup guide](docs/EXTERNAL_SETUP.md). The command preserves unrelated `.env` settings and lets you keep existing keys by pressing Enter. It defaults to the live-verified Nemotron 3.5 Super VL configuration below, with optional thinking disabled to preserve the report output budget. It configures the local app; it does not create provider accounts, redeem credits or verify access.
 
 For manual configuration instead, use the following values.
 
@@ -78,7 +78,7 @@ python scripts/smoke_ai.py --require-live
 python scripts/smoke_ai.py --require-live --research "Siemens AG"
 ```
 
-The model/search paths are tested with mocked provider responses. Actual Nemotron/Tavily calls still require your local credentials and a successful live smoke test. Data-only mode does not demonstrate use of Nemotron for the side challenge.
+CI tests the provider paths with mocked responses and no paid calls. Nemotron 3.5 Super VL and Tavily have also passed live checks in the development workspace; see [verification results](docs/VERIFICATION.md). Each checkout/deployment still needs its own private environment configuration. The research smoke check requires completed report generation and cited findings, while accepting partial reports with evidence gaps. Data-only mode does not demonstrate use of Nemotron for the side challenge.
 
 ## What already works
 
@@ -94,7 +94,7 @@ The model/search paths are tested with mocked provider responses. Actual Nemotro
 - Chat and research views with exact evidence, linked sources, real error states and complete/partial/clarification report rendering.
 - Typed response schemas, a generated OpenAPI contract, locked dependencies, automated checks and a non-root Docker image definition for a single web service.
 
-The core UI and backend are integrated. Remaining delivery work is credential-backed live model/research verification, deployment, demo polish and recording. Tavily search/extraction has been verified live; Nemotron still needs a model API key. API details are in `docs/API.md`, the team handoff is in `docs/EKATERINA_HANDOFF.md`, and production instructions are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+The core UI and backend are merged and verified, including live Nemotron chat and Tavily-backed report generation. Remaining delivery work is deployment with private environment settings and jury access, a live-URL smoke test, final UI/demo polish, the two-minute recording and submission links. API details are in `docs/API.md`, the team handoff is in [docs/EKATERINA_HANDOFF.md](docs/EKATERINA_HANDOFF.md), and production instructions are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Three-hour build plan
 
@@ -106,7 +106,7 @@ The core UI and backend are integrated. Remaining delivery work is credential-ba
 | 110–150 | Integrate, verify numerical claims and error handling | Polish 20-supplier comparison and loading/error states |
 | 150–180 | Verify deployed endpoints and jury access | Record two-minute video; finish submission links |
 
-Bonus only after the core journey works: shortlist memo generated from the same computed comparison data.
+The comparison view already provides a copyable decision memo generated from computed comparison data. PDF export or additional agent integrations are optional after the submission is ready.
 
 ## Architecture and boundaries
 

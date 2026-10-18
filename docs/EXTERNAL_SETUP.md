@@ -38,7 +38,7 @@ Run these commands from the repository root, in a macOS/Linux terminal. Python 3
 
 ```bash
 git fetch origin
-git switch integration-ui-backend
+git switch main
 git pull --ff-only
 python3 -m venv .venv
 source .venv/bin/activate
@@ -49,14 +49,14 @@ python scripts/configure_ai.py
 
 In the setup command:
 
-1. Enter `https://api.tokenfactory.nebius.com/v1/` for the model base URL, or your account's different endpoint. The wizard initially offers the older US-region example.
-2. Enter `nvidia/Nemotron-3.5-Super-VL` for the model ID, preserving case.
+1. Accept `https://api.tokenfactory.nebius.com/v1/` for the model base URL, or enter your account's different endpoint. An existing custom endpoint is preserved even when its key is still blank.
+2. Accept `nvidia/Nemotron-3.5-Super-VL` for the model ID, or enter the exact ID for another model.
 3. Paste your Nebius API key into its hidden prompt and press Enter.
 4. Paste your Tavily API key into its hidden prompt and press Enter.
 
 The terminal will not display the keys as you paste them. Settings are saved in the repository-root `.env`; existing unrelated settings are preserved. `.env` is excluded from Git. Do not paste keys into chat, README files or frontend code.
 
-In `.env`, set `LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}` for the verified Nemotron configuration. Copy the same settings into the deployed backend's environment variables; cloning the repository does not copy private keys.
+The wizard sets `LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}` for this Nemotron model when the existing options are empty. Custom provider options are preserved. Copy the same settings into the deployed backend's environment variables; cloning the repository does not copy private keys.
 
 ## 4. Start and verify
 
@@ -89,6 +89,8 @@ To inspect the full report, open http://localhost:8000/api/docs, expand `POST /a
 ```
 
 If `needs_clarification` is returned, use the question to refine identity. Review partial reports through their source links and limitations. Restart Uvicorn whenever you change `.env`.
+
+The live research smoke check exits unsuccessfully when identity still needs clarification, planning/report generation fails, or no cited findings can be demonstrated. A partial report with completed generation and valid citations passes while retaining its evidence limitations. An inconclusive check does not mean the company is low risk.
 
 ## Troubleshooting
 

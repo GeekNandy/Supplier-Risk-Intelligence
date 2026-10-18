@@ -8,7 +8,7 @@ the existing npm lockfile for the frontend.
 
 | Check | Result |
 |---|---|
-| Backend suite | 69 tests passed |
+| Backend suite | 80 tests passed, including setup migration and live-smoke failure detection |
 | Browser integration suite | 16 tests passed against the integrated UI and a real Python server |
 | Ruff lint and format checks | Passed |
 | Generated OpenAPI snapshot | Matches running backend schemas |
@@ -20,6 +20,7 @@ the existing npm lockfile for the frontend.
 | Tavily remote MCP | Initialization, authenticated tool discovery and a live `tavily_search` call passed |
 | Live Nemotron 3.5 Super VL chat | Both challenge questions passed through real HTTP endpoints with supplier tools and verified evidence |
 | Live Nemotron/Tavily research | Siemens report returned nine findings with valid source references from thirteen sources in 30.4 seconds; partial status retained for evidence gaps |
+| Live jury-authenticated smoke after final fixes | Anonymous API access returned 401; both challenge questions passed, followed by eight cited Knorr-Bremse findings from twelve sources with evidence limitations retained |
 | Docker image | GitHub Actions build and in-container HTTP smoke passed as the non-root runtime user |
 
 Both [push verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122070804)
@@ -64,10 +65,19 @@ The suite also covers ties, missing scores, invalid datasets, maximum selection
 size, pagination, unknown fields/IDs, malformed JSON, invalid URLs, streamed body
 limits, CORS, malformed login headers and required-production configuration.
 
+The final setup fixes align the wizard and example environment with the verified
+Nemotron 3.5 endpoint/model and direct-answer options. Tests reproduce the older
+starter's empty options, preserve a custom endpoint before its key is added, and
+ensure a live research smoke fails on planning/report errors, unknown citations,
+unresolved identity and an inconclusive empty report. Partial reports containing
+cited findings and evidence limitations remain supported. The research prompt
+also explicitly assesses the named company itself as the potential supplier.
+
 ## UI integration
 
-`integration-ui-backend` combines UI commit `a2773c2` from `feature-ekaterina` with
-backend commit `332c221` from `feature-sharad`. The browser suite verifies jury
+PR #2 merged UI commit `a2773c2` from `feature-ekaterina` and backend commit
+`332c221` from `feature-sharad` into `main` with both histories preserved; PR #1
+was automatically marked merged. The browser suite verifies jury
 authentication, pagination/filtering/sorting, twenty-supplier limits and reload
 persistence, tied financial scores, comparison-to-chat context, both challenge
 questions, supplier profiles/definitions, unknown-supplier errors, safe refresh

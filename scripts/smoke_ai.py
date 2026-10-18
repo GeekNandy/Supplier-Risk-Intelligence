@@ -33,6 +33,49 @@ def call(base, path, body=None, headers=None):
         ) from None
 
 
+def verify_research_report(report):
+    """A successful HTTP response alone does not prove report generation worked."""
+    if report.get("status") == "needs_clarification":
+        raise SystemExit(
+            "Research needs clarification: "
+            + (
+                report.get("clarification_question")
+                or "Specify the exact legal entity."
+            )
+            + " Retry with --country and --website."
+        )
+    if report.get("status") not in {"complete", "partial"}:
+        raise SystemExit("Research returned an unsupported report status.")
+    steps = report.get("steps", [])
+    for step in steps:
+        if (
+            step.get("name") in {"Plan research", "Generate report"}
+            and step.get("status") == "failed"
+        ):
+            raise SystemExit(
+                f"Research stage failed: {step['name']}: {step.get('detail', '')}"
+            )
+    if not any(
+        step.get("name") == "Generate report" and step.get("status") == "completed"
+        for step in steps
+    ):
+        raise SystemExit("Research did not demonstrate completed report generation.")
+    findings = report.get("findings", [])
+    if not findings:
+        raise SystemExit(
+            "Research returned no cited findings. The smoke check is inconclusive; review the evidence gaps."
+        )
+    source_ids = {source["id"] for source in report.get("sources", [])}
+    if any(
+        not finding.get("source_ids")
+        or not set(finding["source_ids"]).issubset(source_ids)
+        for finding in findings
+    ):
+        raise SystemExit(
+            "Research findings contain missing or unrecognized source references."
+        )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-url", default="http://localhost:8000")
@@ -143,7 +186,11 @@ if __name__ == "__main__":
         print(
             f"Research: status={report['status']}, findings={len(report['findings'])}, sources={len(report['sources'])}"
         )
-        if report["clarification_question"]:
-            print(report["clarification_question"])
+        if report.get("limitations"):
+            print(
+                f"Research has {len(report['limitations'])} limitations; review them in the research view."
+            )
+        verify_research_report(report)
+        print("Research report generation and source-reference checks passed.")
     if status["chat_mode"] == "data_only":
         print("Data-only checks passed. No live model call was made.")
