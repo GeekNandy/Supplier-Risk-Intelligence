@@ -43,6 +43,16 @@ Open http://localhost:5173. API docs: http://localhost:8000/api/docs. Vite proxi
 
 ## Enable Nemotron and company research
 
+For an interactive setup with hidden key prompts:
+
+```bash
+python scripts/configure_ai.py
+```
+
+Create your provider keys first; follow [the detailed external-services setup guide](docs/EXTERNAL_SETUP.md). The command preserves unrelated `.env` settings and lets you keep existing keys by pressing Enter. It configures the local app; it does not create provider accounts, redeem credits or verify access. Its Nemotron Super defaults match the official Nebius US-region example; replace them if your dashboard's model example uses a different region/model ID.
+
+For manual configuration instead, use the following values.
+
 Edit the repository-root `.env` locally:
 
 ```dotenv
