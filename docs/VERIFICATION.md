@@ -22,6 +22,12 @@ the existing npm lockfile for the frontend.
 | Live Nemotron/Tavily research | Siemens report returned nine findings with valid source references from thirteen sources in 30.4 seconds; partial status retained for evidence gaps |
 | Live jury-authenticated smoke after final fixes | Anonymous API access returned 401; both challenge questions passed, followed by eight cited Knorr-Bremse findings from twelve sources with evidence limitations retained |
 | Docker image | GitHub Actions build and in-container HTTP smoke passed as the non-root runtime user |
+| Render deployment Blueprint | Passed the official Render JSON Schema; model/search keys and jury password are runtime inputs |
+| Render port and auth setup | The Dockerfile's startup command passed locally with `PORT=10000`, required live-AI settings, jury login, built UI/assets and 10,000 suppliers |
+
+The Render configuration is prepared and validated. A hosted service and public
+HTTPS URL remain pending the team's Render account connection; these local
+checks do not claim that the app has already been deployed to Render.
 
 Both [push verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122070804)
 and [pull-request verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122071087)
