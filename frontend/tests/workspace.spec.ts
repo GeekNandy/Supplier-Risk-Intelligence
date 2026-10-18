@@ -59,6 +59,42 @@ test('jury access protects the app while platform readiness stays public', async
   await openWorkspace(page);
 });
 
+test('laptop workspace prioritizes data and keeps results headers visible while scrolling', async ({ page }) => {
+  await page.goto('/');
+  const title = page.getByRole('heading', { name: 'Overview', exact: true });
+  await expect(title).toBeVisible();
+  expect((await title.boundingBox())!.y).toBeLessThan(150);
+  const chart = page.getByRole('img', { name: /Stacked bar chart/ });
+  const footer = page.getByRole('complementary', { name: 'Shortlist' });
+  await expect(chart).toBeVisible();
+  expect((await chart.boundingBox())!.y + 100).toBeLessThan((await footer.boundingBox())!.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await tab(page, 'Explore');
+  const results = page.getByLabel('Supplier results', { exact: true });
+  const header = results.locator('thead');
+  const before = (await header.boundingBox())!.y;
+  await results.evaluate(element => { element.scrollTop = 250; });
+  expect(Math.abs((await header.boundingBox())!.y - before)).toBeLessThan(2);
+});
+
+test('glossary fits mobile screens and closes with Escape or an outside click', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const trigger = page.getByRole('button', { name: 'Glossary', exact: true });
+  const panel = page.getByRole('region', { name: 'Risk glossary' });
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  const box = (await panel.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(390);
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page.getByRole('heading', { name: 'Overview', exact: true }).click();
+  await expect(panel).toBeHidden();
+});
+
 test('an uploaded CSV is validated, mapped and never sent to the server', async ({ page }) => {
   const sent: string[] = [];
   page.on('request', request => { if (request.method() !== 'GET' || (request.postData() ?? '').includes('ACME')) sent.push(`${request.method()} ${request.url()}`); });

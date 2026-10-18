@@ -7,7 +7,7 @@ export type Series = { id: string; values: Record<string, unknown> };
 // iX chart colours; each series also has its own dash pattern so colour is never the only signal.
 const DASHES = [undefined, '6 3', '2 3'];
 export const seriesStyle = (index: number) => ({ color: themeColors().series[index % 3], dash: DASHES[index % 3] });
-export const MONO = '"Siemens Sans", SiemensSans, "Helvetica Neue", "Segoe UI", Arial, sans-serif';
+export const MONO = '"Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif';
 export const tooltipStyle = () => ({ fontSize: 12, borderRadius: 4, borderColor: themeColors().grid, background: themeColors().surface, color: themeColors().text });
 
 const num = (value: unknown) => (typeof value === 'number' ? value : null);
