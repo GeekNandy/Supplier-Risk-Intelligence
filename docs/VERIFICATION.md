@@ -16,7 +16,15 @@ the existing npm lockfile for the frontend.
 | Clean wheel installation | Passed with locked runtime dependencies |
 | Real HTTP production smoke | Passed from a separate working directory |
 | Real Nemotron/Tavily requests | Not run; team API credentials are required |
-| Docker image | CI build/smoke check configured; execution pending a GitHub runner. No local Docker engine is available in this workspace |
+| Docker image | GitHub Actions build and in-container HTTP smoke passed as the non-root runtime user |
+
+Both [push verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122070804)
+and [pull-request verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122071087)
+completed successfully for backend commit `0f4e823`. These include the locked
+dependency install, 69 tests, lint/format, OpenAPI check, Python/frontend builds,
+clean-wheel smoke, and Docker build/smoke. Local checks used Node 24; the hosted
+checks also verified the supported Node 22 setup. No local Docker engine was
+available, so the actual image check ran on GitHub's runner.
 
 The HTTP smoke starts Uvicorn using the installed wheel, checks readiness with
 10,000 suppliers, checks unauthorized/authorized jury access, serves the built
