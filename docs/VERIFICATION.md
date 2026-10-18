@@ -15,7 +15,9 @@ the existing npm lockfile for the frontend.
 | Frontend TypeScript and Vite build | Passed |
 | Clean wheel installation | Passed with locked runtime dependencies |
 | Real HTTP production smoke | Passed from a separate working directory |
-| Real Nemotron/Tavily requests | Not run; team API credentials are required |
+| Live Tavily Search and Extract | Passed through the backend's actual SearchClient: four search results and one extracted Siemens source page |
+| Tavily remote MCP | Initialization, authenticated tool discovery and a live `tavily_search` call passed |
+| Live Nemotron/full research workflow | Not run; the model API key is still required |
 | Docker image | GitHub Actions build and in-container HTTP smoke passed as the non-root runtime user |
 
 Both [push verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122070804)
@@ -25,6 +27,11 @@ dependency install, 69 tests, lint/format, OpenAPI check, Python/frontend builds
 clean-wheel smoke, and Docker build/smoke. Local checks used Node 24; the hosted
 checks also verified the supported Node 22 setup. No local Docker engine was
 available, so the actual image check ran on GitHub's runner.
+
+Tavily was subsequently verified with the supplied credential in this workspace.
+The key is stored only in a gitignored, owner-readable `.env`; it is not part of
+the repository or deployment. MCP was verified through direct protocol calls;
+this does not register native Tavily tools in the current ChatGPT session.
 
 The HTTP smoke starts Uvicorn using the installed wheel, checks readiness with
 10,000 suppliers, checks unauthorized/authorized jury access, serves the built
@@ -37,8 +44,9 @@ Provider integration tests use HTTPX transport stubs while running the actual
 model/search adapters and FastAPI orchestration. They check native tool payloads,
 server-derived evidence and rankings, research search/extraction/report payloads,
 source retention after provider failures, and safe error messages. They verify
-the implementation contract; account access, credits, current live model behavior
-and external network availability still need a credential-backed smoke test.
+the implementation contract. Live Tavily search/extraction access is verified
+above; Nemotron access, model behavior and the deployed end-to-end workflow still
+need a credential-backed smoke test.
 
 The suite also covers ties, missing scores, invalid datasets, maximum selection
 size, pagination, unknown fields/IDs, malformed JSON, invalid URLs, streamed body
