@@ -18,3 +18,6 @@ body { margin: 0; }
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Keep absolutely positioned descendants (e.g. sr-only labels) inside scroll containers. */
+.overflow-x-auto, .overflow-auto { position: relative; }

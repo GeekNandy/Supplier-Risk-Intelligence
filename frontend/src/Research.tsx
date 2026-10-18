@@ -93,6 +93,7 @@ export default function Research({ status }: { status: Status | null }) {
         >
           {missing.length ? <>Missing: {missing.join(' and ')}.</> : <>The server could not start research{error instanceof Error ? `: ${error.message}` : '.'}</>}{' '}
           Ask your admin to add these on the server{sample ? ', or open the cached sample report.' : '. No cached sample report is available in this build.'}
+          {configError && missing.length > 0 && <span className="mt-1 block text-xs">Server response: {(error as Error).message}</span>}
         </WarningBox>
       )}
 

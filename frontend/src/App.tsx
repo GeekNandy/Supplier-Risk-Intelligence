@@ -84,7 +84,7 @@ export default function App() {
                   <p className="text-xs text-gray-500">Rail procurement · supplier risk</p>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
                 <DataIndicator dataset={dataset} onSwitch={() => setLoaderOpen(true)} />
                 <button className={primaryButton} onClick={() => setLoaderOpen(true)}>Load your data</button>
                 <Glossary />
@@ -148,7 +148,7 @@ export default function App() {
           )}
         </main>
 
-        {dataset && tab !== 'research' && tab !== 'overview' && <ShortlistTray shortlist={shortlist} onCompare={tab === 'compare' ? undefined : () => go('compare')} />}
+        {dataset && tab !== 'research' && <ShortlistTray shortlist={shortlist} onCompare={tab === 'compare' ? undefined : () => go('compare')} />}
         {dataset && detailId && <SupplierDetail id={detailId} dataset={dataset} shortlist={shortlist} onClose={closeDetail} />}
         {loaderOpen && <LoadData templateColumns={demoTemplate} onLoaded={onLoaded} onUseDemo={useDemo} onClose={() => setLoaderOpen(false)} isDemo={dataset?.kind === 'demo'} />}
       </div>
@@ -178,10 +178,10 @@ function LoadingView() {
 
 function DataIndicator({ dataset, onSwitch }: { dataset: Dataset | null; onSwitch: () => void }) {
   return (
-    <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm">
+    <div className="flex min-w-0 max-w-full items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm">
       <span className="text-gray-500">Data:</span>
       {dataset
-        ? <span className="max-w-64 truncate font-medium text-gray-900" title={dataset.label}>{dataset.label} · <span className="font-mono">{dataset.rows.length.toLocaleString()}</span> rows</span>
+        ? <span className="min-w-0 max-w-64 truncate font-medium text-gray-900" title={dataset.label}>{dataset.label} · <span className="font-mono">{dataset.rows.length.toLocaleString()}</span> rows</span>
         : <span className="text-gray-500">loading…</span>}
       <button className="font-medium text-gray-900 underline hover:no-underline" onClick={onSwitch}>Switch</button>
     </div>
