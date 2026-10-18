@@ -8,7 +8,7 @@ the existing npm lockfile for the frontend.
 
 | Check | Result |
 |---|---|
-| Backend suite | 83 tests passed, including malformed/schema-invalid/truncated research reports |
+| Backend suite | 94 tests, including malformed/schema-invalid/truncated research reports, concurrent AI capacity and usage accounting |
 | Browser integration suite | 16 tests passed against the integrated UI and a real Python server |
 | Ruff lint and format checks | Passed |
 | Generated OpenAPI snapshot | Matches running backend schemas |
@@ -36,6 +36,51 @@ GitHub app was then connected with access to only this repository. Commit
 [main checks passed](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39133260611).
 Automatic updates are now connected; future UI/backend PRs deploy after merging
 and passing `main` CI.
+
+## Performance and cost checks
+
+Offline measurements on the same workspace use 25 warm-cache samples. The baseline
+was taken on `754161d` before metadata/index caching; timings cover Python functions,
+not HTTP, rendering or model latency. Results vary with hardware and load.
+
+| Operation | Before | After |
+|---|---:|---:|
+| Metadata | 80.504 ms | 0.022 ms |
+| Compare 20 suppliers | 80.468 ms | 0.072 ms |
+| Default supplier search | 78.336 ms | 2.187 ms |
+
+`python scripts/benchmark_backend.py` reproduces current measurements. Its fixed
+20-source fixture compares the previous source representation with the compact
+context using identical evidence: 131,021 versus 39,401 JSON characters, a 69.9%
+reduction. This measures context characters, not billed tokens or report quality.
+Every source ID remains available, including follow-up evidence. Long evidence is
+shortened and explicitly marked; buyers are directed to the original pages.
+
+Provider-reported tokens and attempted model/search/extraction calls are exposed in
+successful responses through numeric `X-AI-*` headers. Missing/partial usage is
+omitted rather than estimated. Regression checks verify request isolation, actual
+usage propagation, unknown usage, immediate 429 rejection above two AI requests,
+and release after errors/cancellation. Data endpoints remain usable while AI is busy.
+
+The existing Actions workflow retains locked installs, lint, API contract checks,
+tests, Python/UI builds, browser checks and production Docker smoke. It now cancels
+obsolete runs for each branch/PR and caches pip downloads keyed by the lockfile.
+CI uses no provider keys or paid AI requests. These optimizations do not add a
+distributed rate limit, total spending cap or response cache.
+
+A local HTTP smoke using the actual Nemotron/Tavily adapters passed after these
+changes. Provider-reported usage for that run was:
+
+| Request | Model calls | Input tokens | Output tokens | Backend time |
+|---|---:|---:|---:|---:|
+| Financial comparison | 2 | 6,505 | 280 | 8.4 s |
+| Total Risk Index explanation | 2 | 5,229 | 640 | 7.7 s |
+| Knorr-Bremse research | 3 | 17,301 | 1,624 | 29.9 s |
+
+Research returned 12 cited findings from 12 sources and six evidence limitations,
+including shortened excerpts. Report generation and citation-reference checks
+passed. These are observed usage figures for one run, not a guaranteed latency,
+cost, semantic-accuracy score or before/after token-savings measurement.
 
 The first hosted research smoke exposed malformed model JSON. Research now sends
 the full Pydantic JSON schema in the provider's `response_format`, then validates

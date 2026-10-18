@@ -116,6 +116,12 @@ Production should set `REQUIRE_JURY_AUTH=true`; set `REQUIRE_LIVE_AI=true` to fa
 
 API POST bodies are limited to 64 KiB, including chunked requests. No conversation, jury passwords or provider credentials are returned by the API or stored in generated reports.
 
+Chat and research share a limit of two concurrent requests per Python process. Further AI requests return 429 with `Retry-After: 5` before calling a provider. Supplier APIs and health probes do not consume those slots. Slots are released on success, errors and cancellation. This controls concurrency, rather than total daily spending.
+
+Successful AI responses expose `X-AI-Model-Calls`, `X-AI-Search-Calls`, `X-AI-Extract-Calls` and `X-AI-Duration-Ms`. Call counts include attempted provider calls within the request. `X-AI-Prompt-Tokens`, `X-AI-Completion-Tokens` and `X-AI-Total-Tokens` contain summed, provider-reported usage only when every model call supplied valid usage. Otherwise the token headers are absent. These are response headers; the JSON body contracts are unchanged. Token totals alone do not establish a monetary cost.
+
+Research model context retains all source IDs while limiting text to 36,000 characters in total and 3,000 per source. Duplicated excerpts and per-source retrieval dates are omitted from prompts; the request timestamp is supplied once. Buyer-facing source metadata stays intact. Truncated text is labelled in the prompt and disclosed in report limitations; linked originals still need review.
+
 ## Error handling
 
 | HTTP status | Behavior |
@@ -125,6 +131,7 @@ API POST bodies are limited to 64 KiB, including chunked requests. No conversati
 | 404 | Supplier lookup failed |
 | 413 | API POST request body exceeds 64 KiB |
 | 422 | Request/schema validation failed; detail can be an array |
+| 429 | Concurrent AI capacity reached; retry after the supplied delay |
 | 502 | Provider response invalid/rejected, bad model JSON, or exhausted tool budget |
 | 503 | Missing/invalid configuration or dataset, provider authentication failure or provider rate limit |
 | 504 | Provider timeout or workflow deadline exceeded |

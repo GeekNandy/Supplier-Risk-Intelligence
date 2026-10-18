@@ -94,7 +94,8 @@ def test_chat_full_http_contract_corrects_an_incorrect_winner(monkeypatch):
     }
 
 
-def test_research_full_http_search_extract_and_report_contract(monkeypatch):
+@pytest.mark.parametrize("long_sources", [False, True])
+def test_research_full_http_search_extract_and_report_contract(monkeypatch, long_sources):
     model_calls, search_calls, extract_calls = 0, 0, 0
 
     def respond(request):
@@ -160,7 +161,11 @@ def test_research_full_http_search_extract_and_report_contract(monkeypatch):
             200,
             json={
                 "results": [
-                    {"url": url, "raw_content": f"Full source evidence: {url}"}
+                    {
+                        "url": url,
+                        "raw_content": f"Full source evidence: {url}"
+                        + (" evidence" * 500 if long_sources else ""),
+                    }
                     for url in body["urls"]
                 ],
                 "failed_results": [],
@@ -179,6 +184,11 @@ def test_research_full_http_search_extract_and_report_contract(monkeypatch):
     assert len(report["findings"]) == 1 and "[S2]" in report["summary"]
     assert all(source["content_type"] == "page_content" for source in report["sources"])
     assert all(source["retrieved_at"] for source in report["sources"])
+    assert any("excerpts were shortened" in item for item in report["limitations"]) == long_sources
+    assert response.headers["X-AI-Model-Calls"] == "3"
+    assert response.headers["X-AI-Search-Calls"] == "3"
+    assert response.headers["X-AI-Extract-Calls"] == "1"
+    assert "X-AI-Total-Tokens" not in response.headers
 
 
 def test_research_retains_sources_after_triage_provider_failure(monkeypatch):

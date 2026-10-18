@@ -18,7 +18,7 @@ Python 3.11+ / FastAPI, React / TypeScript / Vite, Tailwind CSS. Nemotron via a 
 | **Ekaterina** | UI/demo PRs from `main` | `frontend/`, explorer, comparison heatmap, chat/research views, demo presentation | Review the integrated buyer journey, polish the demo and record the walkthrough |
 | **Both** | Pull requests into `main` | Deployment, jury access and submission | Review the hosted buyer journey and submit repository/video/access details |
 
-PR #2 merged the backend and Ekaterina's latest buyer workspace into `main`; PR #1 was automatically marked merged because all its commits were included. The app includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The combined app passes 83 backend checks and 16 browser integration checks. Start further work from current `main`; both original feature branches remain available for history.
+The integrated app includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The backend has 94 regression checks; CI also runs 16 browser integration checks. Start further work from current `main`; both original feature branches remain available for history.
 
 Sharad edits backend files and documentation; Ekaterina edits frontend files. Do not commit API keys. Work through separate branches based on current `main`.
 
@@ -117,6 +117,7 @@ The comparison view already provides a copyable decision memo generated from com
 - `backend/app/data.py`: deterministic data access and calculations. Reuse these functions as LLM tools.
 - `backend/app/main.py`: FastAPI routes and static frontend serving.
 - `backend/app/access.py`: jury access and a 64 KiB API request-body limit.
+- `backend/app/ai_runtime.py`: concurrent AI request limit and request-scoped provider usage.
 - `backend/app/runtime.py`: asset-root resolution for editable and wheel/container installations.
 - `backend/app/chat.py`: bounded tool-calling chat, citation checks and data-only mode.
 - `backend/app/tools.py`: allowlisted Pydantic-validated supplier tools.
@@ -134,6 +135,25 @@ The Total Risk Index is described as a weighted average, but weights are not sup
 Keep credentials in `.env` on the server. `.env` is excluded from git. Use the sponsor model endpoint if it is already available; verify its authentication and API compatibility before wiring it into chat.
 
 Chat allows at most four model calls and eight supplier tool invocations within 60 seconds. Research permits four searches, two extraction batches of up to five pages, and three model calls within 120 seconds. Responses expose actual tool activity or completed workflow steps, not private model reasoning. Research source references are checked against retrieved sources; semantic interpretation of those sources remains model-generated and should be reviewed through the linked evidence.
+
+## Reliability, performance and AI cost
+
+Python computes supplier scores, comparisons and the decision memo without model calls. Supplier metadata and an ID index are cached for the loaded dataset; restart the process after replacing the CSV or criteria file. Reports remain fresh per request. We do not reuse an old company-risk answer as current evidence.
+
+Research prompts remove duplicated excerpts and retrieval dates, preserve every source ID, and cap source text at 36,000 characters overall and 3,000 per source. Shortened excerpts are labelled in the model context and disclosed in report limitations. The JSON schema is supplied once through the provider response format. Nemotron's optional thinking is disabled in the verified configuration.
+
+At most two chat/research requests run concurrently per Python process. Excess requests return HTTP 429 with `Retry-After: 5`; supplier APIs remain available. This bounds simultaneous work alongside the per-request tool/time limits; it is not an account-wide spending cap or a distributed rate limiter.
+
+Successful AI responses include actual provider token totals, call counts and elapsed time in `X-AI-*` headers. Missing token usage stays unknown. Inspect them in browser developer tools or run:
+
+```bash
+python scripts/benchmark_backend.py
+python scripts/smoke_ai.py --require-live --metrics
+# Paid research verification, with exact company identity hints:
+python scripts/smoke_ai.py --require-live --metrics --research "Knorr-Bremse AG" --country Germany --website https://www.knorr-bremse.com
+```
+
+The offline benchmark reports warm backend timings and a same-input source-context comparison; character savings are not billed-token savings. See [measured results and limits](docs/VERIFICATION.md#performance-and-cost-checks). CI cancels obsolete runs for the same branch/PR, caches locked dependency downloads, and deploys merged code only after checks pass.
 
 ## Verification
 

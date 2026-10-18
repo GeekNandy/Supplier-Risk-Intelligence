@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 from dotenv import dotenv_values
 
 
-def call(base, path, body=None, headers=None):
+def call(base, path, body=None, headers=None, metrics=False):
     payload = json.dumps(body).encode() if body is not None else None
     request = Request(
         base.rstrip("/") + path,
@@ -23,6 +23,26 @@ def call(base, path, body=None, headers=None):
     )
     try:
         with urlopen(request, timeout=130) as response:
+            if metrics and path in {"/api/chat", "/api/research"}:
+                names = (
+                    "X-AI-Model-Calls",
+                    "X-AI-Search-Calls",
+                    "X-AI-Extract-Calls",
+                    "X-AI-Prompt-Tokens",
+                    "X-AI-Completion-Tokens",
+                    "X-AI-Total-Tokens",
+                    "X-AI-Duration-Ms",
+                )
+                print(
+                    "Usage:",
+                    json.dumps(
+                        {
+                            name: response.headers[name]
+                            for name in names
+                            if name in response.headers
+                        }
+                    ),
+                )
             return json.load(response)
     except HTTPError as error:
         message = error.read().decode()
@@ -80,6 +100,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-url", default="http://localhost:8000")
     parser.add_argument("--require-live", action="store_true")
+    parser.add_argument(
+        "--metrics", action="store_true", help="Print numeric AI usage headers"
+    )
     parser.add_argument("--research", metavar="COMPANY")
     parser.add_argument(
         "--country", help="Country hint for the optional research request"
@@ -130,6 +153,7 @@ if __name__ == "__main__":
             "message": "Which of SUPP_00012, SUPP_00450 and SUPP_00731 has the lowest financial risk?"
         },
         headers=headers,
+        metrics=args.metrics,
     )
     if not any(
         item["supplier_id"] == "SUPP_00731"
@@ -159,6 +183,7 @@ if __name__ == "__main__":
         "/api/chat",
         {"message": "Why is the Total Risk Index of SUPP_00018 so high?"},
         headers=headers,
+        metrics=args.metrics,
     )
     if not any(
         item["supplier_id"] == "SUPP_00018"
@@ -182,6 +207,7 @@ if __name__ == "__main__":
                 "website": args.website,
             },
             headers=headers,
+            metrics=args.metrics,
         )
         print(
             f"Research: status={report['status']}, findings={len(report['findings'])}, sources={len(report['sources'])}"
