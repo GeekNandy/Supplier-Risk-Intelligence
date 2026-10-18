@@ -10,8 +10,9 @@ from urllib.parse import urlsplit
 from dotenv import dotenv_values, set_key
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_BASE = "https://api.tokenfactory.us-central1.nebius.com/v1/"
-DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
+DEFAULT_BASE = "https://api.tokenfactory.nebius.com/v1/"
+DEFAULT_MODEL = "nvidia/Nemotron-3.5-Super-VL"
+DEFAULT_EXTRA_BODY = '{"chat_template_kwargs":{"enable_thinking":false}}'
 
 
 def save_configuration(path: Path, values: dict[str, str]):
@@ -43,9 +44,6 @@ def main():
         )
     path = ROOT / ".env"
     previous = dotenv_values(path) if path.exists() else {}
-    configured = all(
-        previous.get(key) for key in ["LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL"]
-    )
     print("Supplier Risk Intelligence: hosted AI setup")
     print(
         "Generate keys in your provider dashboards first. Paste them only into the hidden prompts below."
@@ -54,11 +52,11 @@ def main():
         "For API keys, Enter keeps the existing value, or skips that provider if no key is saved."
     )
     print(
-        "The default endpoint/model pair comes from the official Nebius Nemotron Super example."
+        "Defaults use the live-verified Nemotron 3.5 Super VL endpoint and direct-answer settings."
     )
     base = prompt(
         "Model API base URL (use your dashboard's regional URL)",
-        previous.get("LLM_BASE_URL") if configured else DEFAULT_BASE,
+        previous.get("LLM_BASE_URL") or DEFAULT_BASE,
     )
     model = prompt("Exact model ID", previous.get("LLM_MODEL") or DEFAULT_MODEL)
     parsed = urlsplit(base)
@@ -87,6 +85,9 @@ def main():
         or previous.get("TAVILY_API_KEY")
         or ""
     )
+    extra_body = previous.get("LLM_EXTRA_BODY") or "{}"
+    if model == DEFAULT_MODEL and extra_body.strip() == "{}":
+        extra_body = DEFAULT_EXTRA_BODY
     save_configuration(
         path,
         {
@@ -94,7 +95,7 @@ def main():
             "LLM_MODEL": model,
             "LLM_API_KEY": key,
             "TAVILY_API_KEY": search_key,
-            "LLM_EXTRA_BODY": previous.get("LLM_EXTRA_BODY") or "{}",
+            "LLM_EXTRA_BODY": extra_body,
             "CORS_ORIGINS": previous.get("CORS_ORIGINS") or "http://localhost:5173",
         },
     )

@@ -1,6 +1,8 @@
+import json
 import os
 import runpy
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from dotenv import dotenv_values
@@ -46,3 +48,44 @@ def test_configuration_failure_does_not_partially_replace_env(tmp_path, monkeypa
         save(path, {"LLM_API_KEY": "new-key", "TAVILY_API_KEY": "new-search-key"})
     assert path.read_text() == original
     assert list(tmp_path.glob(".env.setup-*")) == []
+
+
+def run_setup(tmp_path, monkeypatch, keys):
+    main = runpy.run_path(str(SCRIPT))["main"]
+    prompts = iter(keys)
+    monkeypatch.setitem(main.__globals__, "ROOT", tmp_path)
+    monkeypatch.setitem(
+        main.__globals__, "sys", SimpleNamespace(stdin=SimpleNamespace(isatty=lambda: True))
+    )
+    monkeypatch.setitem(main.__globals__, "input", lambda _: "")
+    monkeypatch.setitem(
+        main.__globals__, "getpass", SimpleNamespace(getpass=lambda _: next(prompts))
+    )
+    main()
+    return dotenv_values(tmp_path / ".env")
+
+
+def test_fresh_setup_uses_working_nemotron_report_settings(tmp_path, monkeypatch, capsys):
+    # Reproduce a checkout copied from the older starter's blank configuration.
+    (tmp_path / ".env").write_text("LLM_MODEL=\nLLM_EXTRA_BODY={}\n")
+    values = run_setup(tmp_path, monkeypatch, ["test-model-secret", "test-search-secret"])
+    assert values["LLM_BASE_URL"] == "https://api.tokenfactory.nebius.com/v1/"
+    assert values["LLM_MODEL"] == "nvidia/Nemotron-3.5-Super-VL"
+    assert json.loads(values["LLM_EXTRA_BODY"])["chat_template_kwargs"]["enable_thinking"] is False
+    output = capsys.readouterr().out
+    assert "test-model-secret" not in output and "test-search-secret" not in output
+
+
+def test_setup_keeps_custom_endpoint_before_key_is_added(tmp_path, monkeypatch):
+    (tmp_path / ".env").write_text(
+        "LLM_BASE_URL=https://custom.example/v1/\nLLM_MODEL=custom-model\nLLM_API_KEY=\n"
+        "LLM_EXTRA_BODY='{\"temperature\":0.2}'\nTAVILY_API_KEY=existing-search-key\n"
+        "CUSTOM_SETTING=keep-me\n"
+    )
+    values = run_setup(tmp_path, monkeypatch, ["new-model-key", ""])
+    assert values["LLM_BASE_URL"] == "https://custom.example/v1/"
+    assert values["LLM_MODEL"] == "custom-model"
+    assert values["LLM_API_KEY"] == "new-model-key"
+    assert values["TAVILY_API_KEY"] == "existing-search-key"
+    assert json.loads(values["LLM_EXTRA_BODY"]) == {"temperature": 0.2}
+    assert values["CUSTOM_SETTING"] == "keep-me"
