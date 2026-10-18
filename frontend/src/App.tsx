@@ -181,7 +181,7 @@ function DataIndicator({ dataset, onSwitch }: { dataset: Dataset | null; onSwitc
     <div className="flex min-w-0 max-w-full items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm">
       <span className="text-gray-500">Data:</span>
       {dataset
-        ? <span className="min-w-0 max-w-64 truncate font-medium text-gray-900" title={dataset.label}>{dataset.label} · <span className="font-mono">{dataset.rows.length.toLocaleString()}</span> rows</span>
+        ? <span className="min-w-0 max-w-80 truncate font-medium text-gray-900" title={dataset.label}>{dataset.label} · <span className="font-mono">{dataset.rows.length.toLocaleString()}</span> rows</span>
         : <span className="text-gray-500">loading…</span>}
       <button className="font-medium text-gray-900 underline hover:no-underline" onClick={onSwitch}>Switch</button>
     </div>

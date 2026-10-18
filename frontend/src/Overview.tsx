@@ -3,14 +3,14 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Scatter, Sca
 import type { Supplier } from './api';
 import { MONO } from './charts';
 import { sortRows, type Dataset } from './dataset';
-import { fieldLabel, formatValue } from './format';
+import { fieldLabel, formatValue, LEVEL_ORDER } from './format';
 import { TOTAL_TIP } from './glossary';
 import type { Shortlist } from './shortlist';
 import { Card, EmptyState, InfoTip, inputClass, LevelBadge, ScoreBar, SectionLabel, ViewHeader } from './ui';
 import { useWorkspace } from './workspace';
 
 // Semantic risk colours; each level also gets its own marker shape, and labels are always printed.
-const LEVEL_COLOR: Record<string, string> = { Low: '#16a34a', Medium: '#d97706', High: '#ea580c', Critical: '#dc2626' };
+const LEVEL_COLOR: Record<string, string> = { Low: '#16a34a', Medium: '#fbbf24', High: '#f97316', Critical: '#b91c1c' };
 const LEVEL_SHAPE: Record<string, 'circle' | 'square' | 'triangle' | 'diamond'> = { Low: 'circle', Medium: 'square', High: 'triangle', Critical: 'diamond' };
 const OTHER_COLORS = ['#374151', '#9ca3af', '#6b7280', '#d1d5db'];
 const colorFor = (level: string, index: number) => LEVEL_COLOR[level] ?? OTHER_COLORS[index % OTHER_COLORS.length];
@@ -63,8 +63,13 @@ export default function Overview({ dataset, shortlist }: { dataset: Dataset; sho
   );
 }
 
+// Low/Medium/High/Critical and Simple/Moderate/Complex read in their natural order; anything else alphabetically.
+const NATURAL_ORDER = [...LEVEL_ORDER, 'Simple', 'Moderate', 'Complex'];
+const rank = (value: string) => { const index = NATURAL_ORDER.indexOf(value); return index < 0 ? NATURAL_ORDER.length : index; };
+
 function distinct(rows: Supplier[], field: string): string[] {
-  return [...new Set(rows.map(row => row[field]).filter(value => value !== null && value !== '').map(String))].sort();
+  return [...new Set(rows.map(row => row[field]).filter(value => value !== null && value !== '').map(String))]
+    .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
 }
 
 function Kpis({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
@@ -111,7 +116,7 @@ function RiskMix({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
       const members = rows.filter(row => String(row[field]) === group);
       return { group, total: members.length, ...Object.fromEntries(dataset.levels.map(level => [level, members.filter(row => row.Total_Risk_Index_Level === level).length])) };
     });
-    return groups.sort((a, b) => b.total - a.total).slice(0, 12);
+    return groups.sort((a, b) => rank(a.group) - rank(b.group) || b.total - a.total).slice(0, 12);
   }, [rows, field, dataset.levels]);
 
   const unavailable = !dataset.hasLevel ? 'This file has no risk-level column, so the mix cannot be shown (levels are never derived from scores).'
@@ -224,7 +229,7 @@ function ScoreScatter({ dataset, rows, shortlist, onPick }: { dataset: Dataset; 
                 shape={LEVEL_SHAPE[item.level] ?? 'circle'} onClick={click} cursor="pointer" isAnimationActive={false} />
             ))}
             {shortlisted.length > 0 && (
-              <Scatter name="Your shortlist" data={shortlisted} fill="#ffd21e" stroke="#111827" strokeWidth={1.5} shape="star" onClick={click} cursor="pointer" isAnimationActive={false} />
+              <Scatter name="Your shortlist (★)" data={shortlisted} fill="#ffd21e" stroke="#111827" strokeWidth={1.5} shape="star" legendType="star" onClick={click} cursor="pointer" isAnimationActive={false} />
             )}
           </ScatterChart>
         </ResponsiveContainer>
