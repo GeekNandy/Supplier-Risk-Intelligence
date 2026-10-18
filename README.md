@@ -2,6 +2,10 @@
 
 Siemens hackathon project: explore and compare supplier risk, ask grounded questions, and research real companies with cited evidence.
 
+**Live app:** [Supplier Risk Intelligence](https://supplier-risk-intelligence-qghi.onrender.com)
+— sign in as `jury` using the password shared privately with the team. The same
+service hosts the UI and API; `/api/docs` requires that login too.
+
 ## Stack
 
 Python 3.11+ / FastAPI, React / TypeScript / Vite, Tailwind CSS. Nemotron via a hosted OpenAI-compatible API; Tavily for public-source search and page extraction. CSV loaded in memory; no database required for this prototype. Node 22.12+ for frontend development.
@@ -10,11 +14,11 @@ Python 3.11+ / FastAPI, React / TypeScript / Vite, Tailwind CSS. Nemotron via a 
 
 | Owner | Branch | Owns | Immediate next actions |
 |---|---|---|---|
-| **Sharad** | Backend PRs from `main` | `backend/`, provider integration, grounded chat, research, API contracts, backend deployment | Backend and live AI are verified; deploy the integrated app and verify jury access at the public URL |
+| **Sharad** | Backend PRs from `main` | `backend/`, provider integration, grounded chat, research, API contracts, backend deployment | Maintain the deployed service and verify live AI after backend changes |
 | **Ekaterina** | UI/demo PRs from `main` | `frontend/`, explorer, comparison heatmap, chat/research views, demo presentation | Review the integrated buyer journey, polish the demo and record the walkthrough |
-| **Both** | Pull requests into `main` | Deployment, jury access and submission | Publish the live URL, verify the full buyer journey, and submit repository/video/access details |
+| **Both** | Pull requests into `main` | Deployment, jury access and submission | Review the hosted buyer journey and submit repository/video/access details |
 
-PR #2 merged the backend and Ekaterina's latest buyer workspace into `main`; PR #1 was automatically marked merged because all its commits were included. The app includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The combined app passes 80 backend checks and 16 browser integration checks. Start further work from current `main`; both original feature branches remain available for history.
+PR #2 merged the backend and Ekaterina's latest buyer workspace into `main`; PR #1 was automatically marked merged because all its commits were included. The app includes the explorer, persistent 20-supplier shortlist, comparison heatmap, decision memo, supplier profiles, chat evidence and cited research views. The combined app passes 83 backend checks and 16 browser integration checks. Start further work from current `main`; both original feature branches remain available for history.
 
 Sharad edits backend files and documentation; Ekaterina edits frontend files. Do not commit API keys. Work through separate branches based on current `main`.
 
@@ -87,14 +91,14 @@ CI tests the provider paths with mocked responses and no paid calls. Nemotron 3.
 - Comparison of 1–20 unique suppliers, ties, missing-value handling and highest observed risk categories.
 - Grounded chatbot using allowlisted, validated supplier tools. Evidence values come from actual tool-returned rows; unsupported references are removed and unsupported scalar values trigger a verified-values response.
 - A bounded company research workflow: identity check, model-generated plan, two risk searches, source extraction, one evidenced red-flag follow-up, and cited findings.
-- Research reports distinguish unresolved company identity, partial evidence and a completed workflow; retain source dates, retrieval dates and explicit limitations.
+- Research requests use provider-enforced JSON schemas, then validate report fields and citation references. Reports retain source dates, retrieval dates and explicit evidence limitations.
 - Clear provider/configuration errors, timeouts, readiness checks and smoke-test commands.
 - Optional jury HTTP Basic login protecting the UI, API and API docs; configuration failures close access.
 - Buyer workspace with search/filtering, persistent shortlists, a 20-column risk heatmap, tied rankings, copyable justification, supplier profiles and metric definitions.
 - Chat and research views with exact evidence, linked sources, real error states and complete/partial/clarification report rendering.
 - Typed response schemas, a generated OpenAPI contract, locked dependencies, automated checks and a non-root Docker image definition for a single web service.
 
-The core UI and backend are merged and verified, including live Nemotron chat and Tavily-backed report generation. Remaining delivery work is deployment with private environment settings and jury access, a live-URL smoke test, final UI/demo polish, the two-minute recording and submission links. API details are in `docs/API.md`, the team handoff is in [docs/EKATERINA_HANDOFF.md](docs/EKATERINA_HANDOFF.md), and production instructions are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+The core UI and backend are merged, and the integrated app is hosted on Render with private model/search settings and jury login. Remaining delivery work is the final buyer walkthrough, UI/demo polish, the two-minute recording and submission links. API details are in `docs/API.md`, the team handoff is in [docs/EKATERINA_HANDOFF.md](docs/EKATERINA_HANDOFF.md), and production instructions are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Three-hour build plan
 
@@ -159,13 +163,12 @@ The GitHub workflow in `.github/workflows/verify.yml` runs linting, tests, contr
 
 ## Jury access and deployment
 
-The repository includes a [Render Docker Blueprint](render.yaml) for one Free-plan
-web service with the verified Nemotron settings, required jury login and health
-checks. [Deploy to Render](https://render.com/deploy?repo=https://github.com/GeekNandy/Supplier-Risk-Intelligence)
-and provide the private model/search keys and jury password. Follow the
-[deployment guide](docs/DEPLOYMENT.md#render-deployment) for account connection,
-CI-based updates and the required public-URL checks. A committed Blueprint does
-not mean a live hosted service has been created.
+The [live Render service](https://supplier-risk-intelligence-qghi.onrender.com)
+serves both React and FastAPI on the Free plan in Frankfurt. It checks
+`/api/ready` and deploys updates to `main` after CI passes. Merge UI changes into
+`main` to update this same URL. The [Render Docker Blueprint](render.yaml) is a
+recreation template; the existing service was created directly and its settings
+are managed in Render. See the [deployment guide](docs/DEPLOYMENT.md#render-deployment).
 
 Configure jury access in your own terminal:
 
@@ -188,12 +191,13 @@ For local production verification without Docker, build `frontend`, then restart
 
 ## Submission checklist
 
-- [ ] Core explorer, 20-supplier comparison, grounded chatbot and research workflow complete.
-- [ ] Repository contains all code/data and reproducible setup instructions.
+- [x] Core explorer, 20-supplier comparison, grounded chatbot and research workflow complete.
+- [x] Repository contains all code/data and reproducible setup instructions.
 - [ ] Deployed URL verified from a fresh browser session.
-- [ ] Jury login and credentials verified.
+- [x] Jury login and credentials verified over HTTPS.
 - [ ] Two-minute video: filter → compare three suppliers → ask a risk question → research a real company.
-- [ ] README updated with live URL and video link.
+- [x] README updated with the live app URL.
+- [ ] README updated with the final video link.
 
 Submission deadline supplied by the organizers: **18:30 Berlin time, 18 October 2026**. Reserve time for the deployed walkthrough and video upload.
 
@@ -201,7 +205,7 @@ Submission deadline supplied by the organizers: **18:30 Berlin time, 18 October 
 
 - [FastAPI](https://fastapi.tiangolo.com/), [Pydantic](https://docs.pydantic.dev/latest/), [HTTPX](https://www.python-httpx.org/), [Uvicorn](https://www.uvicorn.org/)
 - [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/docs/), [Vite](https://vite.dev/guide/), [Tailwind CSS](https://tailwindcss.com/docs/installation/using-vite)
-- [Nemotron on Nebius Token Factory](https://nebius.com/services/token-factory/models/nvidia-nemotron-models-inference)
+- [Nemotron on Nebius Token Factory](https://nebius.com/services/token-factory/models/nvidia-nemotron-models-inference), [structured output](https://docs.tokenfactory.nebius.com/ai-models-inference/json)
 - [Tavily Search](https://docs.tavily.com/documentation/api-reference/endpoint/search), [Tavily Extract](https://docs.tavily.com/documentation/api-reference/endpoint/extract)
 
 Prioritize the Siemens buyer journey and meaningful Nemotron use. Hugging Face participation follows its separate application process. n8n and Devin integrations remain optional stretch work after the core demo is complete.

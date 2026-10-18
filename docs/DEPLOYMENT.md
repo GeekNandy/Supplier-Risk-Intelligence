@@ -6,6 +6,17 @@ local model server, NVIDIA GPU, n8n or Devin account is required.
 
 ## Render deployment
 
+**Live app:** https://supplier-risk-intelligence-qghi.onrender.com
+
+The existing service is `srv-dbaceslg1s2s73bjg3u0` in the team's **My Workspace**.
+It was created directly from the repository through Render, with the private
+model/search keys and jury credentials configured on the service. Its Dashboard
+settings enable `/api/ready` and **After CI Checks Pass** on `main`. Merging UI or
+backend changes updates this same service. The Dashboard manages its settings;
+the committed Blueprint remains a template for recreating the deployment.
+
+### Recreate in another workspace
+
 The root `render.yaml` defines one Docker web service in Frankfurt on the Free
 compute plan. It serves both the React UI and Python API, uses `/api/ready` for
 health checks, requires live AI and jury authentication, and follows `main` after
@@ -13,8 +24,8 @@ its CI checks pass. No database or persistent disk is created.
 
 [Deploy this repository to Render](https://render.com/deploy?repo=https://github.com/GeekNandy/Supplier-Risk-Intelligence)
 
-1. Sign in to your Render account and select the deployment workspace. The app
-   cannot create a hosted service until that account is connected.
+1. Sign in to your Render account and select the intended deployment workspace.
+   Use these steps only when creating a separate service.
 2. Use the link above, review the service and keep the `free` plan. If creating
    the service manually, choose a Docker Web Service from this repository's
    `main` branch, with repository-root build context and `./Dockerfile`.
@@ -78,6 +89,9 @@ Live calls consume provider credits; local tests and the production smoke do not
 Choose a host that accepts a Dockerfile, build from the repository root, select
 `main`, and expose the service's `PORT` (default 8000; the Render Blueprint uses 10000).
 The host must support outbound HTTPS to the selected model API and `api.tavily.com`.
+The model endpoint must support OpenAI-compatible tools for chat and
+`response_format.type=json_schema` for research. The verified Nemotron endpoint
+supports both; Pydantic and citation checks still validate every research response.
 
 ```bash
 docker build -t supplier-risk-intelligence .

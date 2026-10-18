@@ -107,6 +107,7 @@ class SourceBook:
 
 
 async def structured(model: ModelClient, instruction: str, context: dict, schema: type[BaseModel]):
+    response_schema = schema.model_json_schema()
     message = await model.complete(
         [
             {
@@ -118,11 +119,12 @@ async def structured(model: ModelClient, instruction: str, context: dict, schema
                     "Do not map real companies to anonymized supplier IDs. Missing information means unknown risk. "
                     + instruction
                     + " Return ONLY JSON matching this schema: "
-                    + json.dumps(schema.model_json_schema())
+                    + json.dumps(response_schema)
                 ),
             },
             {"role": "user", "content": json.dumps(context)},
-        ]
+        ],
+        response_schema=response_schema,
     )
     try:
         return schema.model_validate(json_object(message.get("content")))

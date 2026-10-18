@@ -244,7 +244,8 @@ def test_ambiguous_company_stops_before_risk_search(monkeypatch):
             }
         ]
 
-    async def complete(self, messages, tools=None):
+    async def complete(self, messages, tools=None, *, response_schema=None):
+        assert response_schema is not None
         return {
             "content": json.dumps(
                 {
@@ -292,7 +293,8 @@ def test_research_follows_evidenced_red_flag_and_filters_fake_citations(monkeypa
             ]
         }
 
-    async def complete(self, messages, tools=None):
+    async def complete(self, messages, tools=None, *, response_schema=None):
+        assert response_schema is not None
         nonlocal model_calls
         model_calls += 1
         if model_calls == 1:
@@ -390,7 +392,8 @@ def test_partial_research_keeps_available_evidence_when_one_search_fails(monkeyp
     async def extract(self, urls):
         raise ServiceError("Page extraction provider timed out.", 504)
 
-    async def complete(self, messages, tools=None):
+    async def complete(self, messages, tools=None, *, response_schema=None):
+        assert response_schema is not None
         nonlocal model_calls
         model_calls += 1
         if model_calls == 1:

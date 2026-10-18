@@ -43,6 +43,7 @@ def test_chat_full_http_contract_corrects_an_incorrect_winner(monkeypatch):
         assert request.headers["authorization"] == "Bearer test-model-key"
         body = json.loads(request.content)
         bodies.append(body)
+        assert "response_format" not in body
         if len(bodies) == 1:
             assert len(body["tools"]) == 3
             return model_response(
@@ -103,6 +104,9 @@ def test_research_full_http_search_extract_and_report_contract(monkeypatch):
             model_calls += 1
             assert request.headers["authorization"] == "Bearer test-model-key"
             assert "tools" not in body
+            assert body["response_format"]["type"] == "json_schema"
+            schema = body["response_format"]["json_schema"]["schema"]
+            assert schema["title"] in {"ResearchPlan", "Triage", "ReportDraft"}
             if model_calls == 1:
                 return model_response(
                     {
@@ -264,6 +268,70 @@ def test_research_identity_model_failure_keeps_sources(monkeypatch):
     report = client.post("/api/research", json={"company_name": "Acme Rail"}).json()
     assert report["status"] == "partial" and len(report["sources"]) == 1
     assert report["findings"] == [] and report["company"]["identity_confidence"] == "low"
+
+
+@pytest.mark.parametrize(
+    "report_content,finish_reason",
+    [
+        ("{PRIVATE-UPSTREAM", "stop"),
+        ('{"findings":"PRIVATE-UPSTREAM"}', "stop"),
+        ('{"findings":[]}', "length"),
+    ],
+)
+def test_invalid_final_report_keeps_evidence_and_marks_generation_failed(
+    monkeypatch, report_content, finish_reason
+):
+    model_calls = 0
+
+    def respond(request):
+        nonlocal model_calls
+        body = json.loads(request.content)
+        if request.url.host == "model.example.com":
+            model_calls += 1
+            assert body["response_format"]["type"] == "json_schema"
+            if model_calls == 1:
+                return model_response(
+                    {
+                        "company": {
+                            "name": "Acme Rail",
+                            "identity_confidence": "high",
+                            "identity_source_ids": ["S1"],
+                        },
+                        "queries": ["financial risk"],
+                    }
+                )
+            if model_calls == 2:
+                return model_response({"red_flags": []})
+            return httpx.Response(
+                200,
+                json={
+                    "choices": [
+                        {"finish_reason": finish_reason, "message": {"content": report_content}}
+                    ]
+                },
+            )
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {
+                        "url": "https://acme.example.com/report",
+                        "content": "Acme financial evidence",
+                        "raw_content": "Acme financial evidence",
+                        "published_date": "2026-10-01",
+                    }
+                ]
+            },
+        )
+
+    configure_transport(monkeypatch, respond)
+    report = client.post("/api/research", json={"company_name": "Acme Rail"}).json()
+    assert model_calls == 3 and report["status"] == "partial"
+    assert report["sources"] and report["findings"] == []
+    assert any(
+        step["name"] == "Generate report" and step["status"] == "failed" for step in report["steps"]
+    )
+    assert "PRIVATE-UPSTREAM" not in json.dumps(report)
 
 
 @pytest.mark.parametrize(

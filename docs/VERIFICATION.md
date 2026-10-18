@@ -8,7 +8,7 @@ the existing npm lockfile for the frontend.
 
 | Check | Result |
 |---|---|
-| Backend suite | 80 tests passed, including setup migration and live-smoke failure detection |
+| Backend suite | 83 tests passed, including malformed/schema-invalid/truncated research reports |
 | Browser integration suite | 16 tests passed against the integrated UI and a real Python server |
 | Ruff lint and format checks | Passed |
 | Generated OpenAPI snapshot | Matches running backend schemas |
@@ -25,9 +25,19 @@ the existing npm lockfile for the frontend.
 | Render deployment Blueprint | Passed the official Render JSON Schema; model/search keys and jury password are runtime inputs |
 | Render port and auth setup | The Dockerfile's startup command passed locally with `PORT=10000`, required live-AI settings, jury login, built UI/assets and 10,000 suppliers |
 
-The Render configuration is prepared and validated. A hosted service and public
-HTTPS URL remain pending the team's Render account connection; these local
-checks do not claim that the app has already been deployed to Render.
+The app is live at https://supplier-risk-intelligence-qghi.onrender.com on the
+Free plan in Frankfurt. Public HTTPS, the built UI/assets, supplier comparison
+and authenticated API docs passed real HTTP checks. Anonymous and incorrect
+credentials returned 401. Both challenge questions passed through the hosted
+Nemotron integration. Render confirms `/api/ready` and CI-gated auto-deploys.
+
+The first hosted research smoke exposed malformed model JSON. Research now sends
+the full Pydantic JSON schema in the provider's `response_format`, then validates
+fields and source IDs locally. A real schema-constrained Knorr-Bremse run returned
+ten cited findings from twelve sources in 31.5 seconds, with no failed workflow
+stages. Evidence limitations keep the report honestly marked partial. The
+regression suite preserves collected sources and marks generation failed for
+malformed, schema-invalid and output-truncated responses.
 
 Both [push verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122070804)
 and [pull-request verification](https://github.com/GeekNandy/Supplier-Risk-Intelligence/actions/runs/39122071087)
@@ -39,7 +49,8 @@ available, so the actual image check ran on GitHub's runner.
 
 Tavily and Nemotron were subsequently verified with supplied credentials in this workspace.
 The keys are stored only in a gitignored, owner-readable `.env`; they are not part of
-the repository or deployment. MCP was verified through direct protocol calls;
+the repository. The hosted service has its own private environment settings.
+MCP was verified through direct protocol calls;
 this does not register native Tavily tools in the current ChatGPT session.
 
 The live model configuration is `https://api.tokenfactory.nebius.com/v1/` with
@@ -64,8 +75,8 @@ model/search adapters and FastAPI orchestration. They check native tool payloads
 server-derived evidence and rankings, research search/extraction/report payloads,
 source retention after provider failures, and safe error messages. They verify
 the implementation contract. Live Tavily search/extraction and Nemotron orchestration
-were separately verified above. The deployed end-to-end workflow still needs the
-same credential-backed smoke test after deployment.
+were separately verified above. Repeat the credential-backed smoke test below
+after a deployed provider or research change.
 
 The suite also covers ties, missing scores, invalid datasets, maximum selection
 size, pagination, unknown fields/IDs, malformed JSON, invalid URLs, streamed body
@@ -107,10 +118,9 @@ Follow the root README's verification commands and `docs/DEPLOYMENT.md` for a cl
 wheel or container smoke check. Before submission, run:
 
 ```bash
-python scripts/smoke_ai.py --api-url https://YOUR-HOST --require-live --research "Siemens AG" --country Germany --website https://www.siemens.com --jury-user jury
+python scripts/smoke_ai.py --api-url https://supplier-risk-intelligence-qghi.onrender.com --require-live --research "Knorr-Bremse AG" --country Germany --website https://www.knorr-bremse.com --jury-user jury
 ```
 
-The jury password is prompted without echoing. The live URL, deployed smoke test,
-demo polish and recording remain team delivery
-work. The comparison/research results need source review; reference validation does
+The jury password is prompted without echoing. Final buyer review, demo polish
+and the recording remain team delivery work. The comparison/research results need source review; reference validation does
 not prove every model-generated semantic interpretation.
