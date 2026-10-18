@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, type ChatResponse, type Status } from './api';
 import { fieldLabel, formatValue } from './format';
 import type { Shortlist } from './shortlist';
-import { AiError, Btn, Card, inputClass, primaryButton, Spinner } from './ui';
+import { AiError, Btn, Card, inputClass, primaryButton, Spinner, ViewHeader } from './ui';
 import { useWorkspace } from './workspace';
 
 const EXAMPLES = [
@@ -50,8 +50,9 @@ export default function Chat({ shortlist, status, onAddIds, draft }: { shortlist
 
   return (
     <div className="space-y-5">
+      <ViewHeader title="Ask about the data" purpose="Get answers grounded in supplier records, with the exact fields and values behind each answer." />
       <Card
-        title="Ask about the supplier data"
+        title="Your question"
         subtitle="Answers are grounded in the anonymized dataset and cite the exact supplier, field and value. Each question is answered on its own; earlier questions are not remembered."
         actions={<ModeBadge status={status} />}
       >

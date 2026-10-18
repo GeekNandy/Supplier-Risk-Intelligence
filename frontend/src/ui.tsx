@@ -83,9 +83,9 @@ export function AiError({ error, feature, onRetry }: { error: unknown; feature: 
 
 export function Card({ title, subtitle, actions, children, className = '' }: { title?: ReactNode; subtitle?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded border border-gray-200 bg-white transition-colors hover:border-gray-300 ${className}`}>
+    <section className={`sri-card ${className}`}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
+        <header className="sri-card-header">
           <div>
             {title && <h2 className="text-base font-semibold text-gray-900">{title}</h2>}
             {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
@@ -93,7 +93,7 @@ export function Card({ title, subtitle, actions, children, className = '' }: { t
           {actions}
         </header>
       )}
-      <div className="p-6">{children}</div>
+      <div className="sri-card-body">{children}</div>
     </section>
   );
 }
@@ -135,8 +135,8 @@ export function Tip({ id, text, children }: { id: string; text?: string; childre
 
 export const inputClass = 'sri-field text-sm';
 // Native buttons kept for form submission, styled to match ix-button.
-export const primaryButton = 'inline-flex min-h-8 items-center justify-center rounded bg-accent px-4 py-1.5 text-sm font-bold text-on-accent hover:bg-accent-strong disabled:cursor-not-allowed disabled:bg-[var(--theme-color-primary--disabled)] disabled:text-gray-500';
-export const secondaryButton = 'inline-flex min-h-8 items-center justify-center rounded border border-accent px-3 py-1.5 text-sm font-bold text-accent hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50';
+export const primaryButton = 'inline-flex min-h-9 items-center justify-center rounded bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent hover:bg-accent-strong disabled:cursor-not-allowed disabled:bg-[var(--theme-color-primary--disabled)] disabled:text-gray-500';
+export const secondaryButton = 'inline-flex min-h-9 items-center justify-center rounded border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50';
 
 /** Small uppercase section label used in "model-card" layouts. */
 export function SectionLabel({ children }: { children: ReactNode }) {
@@ -217,7 +217,7 @@ export function InfoLine({ children, more }: { children: ReactNode; more?: React
 /** Title + one-sentence purpose line used at the top of each view. */
 export function ViewHeader({ title, purpose, actions }: { title: string; purpose: string; actions?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="sri-view-header">
       <div>
         <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
         <p className="mt-1 text-sm text-gray-600">{purpose}</p>

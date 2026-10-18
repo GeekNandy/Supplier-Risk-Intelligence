@@ -30,10 +30,10 @@ export default function Overview({ dataset, shortlist }: { dataset: Dataset; sho
     <>
       <ViewHeader
         title="Overview"
-        purpose={`Where the risk sits across ${dataset.kind === 'demo' ? 'the demo dataset' : 'your file'}: risk-level mix, how sub-scores relate, and the highest-risk suppliers.`}
+        purpose={`Review risk across ${rows.length.toLocaleString()} ${dataset.kind === 'demo' ? 'anonymized suppliers' : 'suppliers in your file'}. Open a profile to inspect the supplied values.`}
       />
       {dataset.groupFields.length > 0 && (
-        <div className="mb-5 flex flex-wrap items-end gap-3">
+        <div className="sri-overview-filters mb-5 flex flex-wrap items-end gap-3">
           {dataset.groupFields.slice(0, 4).map(field => (
             <label key={field} className="flex flex-col gap-1 text-xs font-medium text-gray-600">
               {field}
@@ -87,18 +87,18 @@ function Kpis({ dataset, rows, shortlistCount }: { dataset: Dataset; rows: Suppl
       : { label: 'Your shortlist', value: `${shortlistCount} / 20`, note: shortlistCount ? 'Ready to compare side by side' : 'Tick suppliers in Explore' },
   ];
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="sri-kpi-grid">
       {tiles.map(tile => (
-        <div key={tile.label} className="rounded border border-gray-200 bg-white px-6 py-5">
+        <div key={tile.label} className="sri-kpi">
           <SectionLabel>{tile.label}</SectionLabel>
-          {tile.value !== null && <p className="mt-2 text-[32px] font-bold leading-none tabular-nums text-gray-900">{tile.value}</p>}
-          {tile.note && <p className={`text-xs text-gray-500 ${tile.value !== null ? 'mt-2' : 'mt-3'}`}>{tile.note}</p>}
+          {tile.value !== null && <p className="sri-kpi-value tabular-nums">{tile.value}</p>}
+          {tile.note && <p className="sri-kpi-note">{tile.note}</p>}
         </div>
       ))}
-      <div className="rounded border border-gray-200 bg-white px-6 py-5">
+      <div className="sri-kpi">
         <SectionLabel>By risk level (as supplied)</SectionLabel>
         {dataset.hasLevel ? (
-          <ul className="mt-1.5 space-y-1">
+          <ul className="sri-risk-breakdown">
             {counts.map(([level, value]) => (
               <li key={level} className="flex items-center justify-between gap-2 text-sm">
                 <LevelBadge level={level} />
@@ -130,9 +130,9 @@ function RiskMix({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
   return (
     <Card
       title="Risk-level mix"
-      subtitle={field ? `Suppliers per ${field}, split by supplied risk level.` : 'Suppliers per group, split by supplied risk level.'}
+      subtitle="Suppliers by supplied risk level."
       actions={dataset.hasLevel && dataset.groupFields.length > 1 && (
-        <label className="flex items-center gap-2 text-xs text-gray-600">
+        <label className="sri-chart-group flex items-center gap-2 text-xs text-gray-600">
           Group by
           <select className={`${inputClass} py-1`} value={field} onChange={event => setGroupBy(event.target.value)}>
             {dataset.groupFields.map(option => <option key={option} value={option}>{option}</option>)}
@@ -142,8 +142,7 @@ function RiskMix({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
     >
       {unavailable ? <p className="py-8 text-center text-sm text-gray-600">{unavailable}</p> : (
         <>
-          {!dataset.mapping.country && !dataset.mapping.category && <p className="mb-2 text-xs text-gray-500">This dataset has no country or category column, so grouping uses its other descriptive columns.</p>}
-          <div style={{ height: 300 }} role="img" aria-label={`Stacked bar chart of risk levels by ${field}`}>
+          <div style={{ height: 224 }} role="img" aria-label={`Stacked bar chart of risk levels by ${field}`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
                 <CartesianGrid stroke={themeColors().grid} vertical={false} />
@@ -155,6 +154,7 @@ function RiskMix({ dataset, rows }: { dataset: Dataset; rows: Supplier[] }) {
               </BarChart>
             </ResponsiveContainer>
           </div>
+          {!dataset.mapping.country && !dataset.mapping.category && <p className="mt-3 text-xs text-gray-500">This dataset has no country or category column; grouping uses its other descriptive columns.</p>}
         </>
       )}
     </Card>
@@ -195,7 +195,7 @@ function ScoreScatter({ dataset, rows, shortlist, onPick }: { dataset: Dataset; 
 
   return (
     <Card title="Sub-score scatter" subtitle="Each dot is a supplier. Click one to open its profile.">
-      <div className="mb-2 flex flex-wrap gap-3">
+      <div className="sri-scatter-controls mb-3">
         {[['X axis', x, setX], ['Y axis', y, setY]].map(([label, value, set]) => (
           <label key={label as string} className="flex items-center gap-2 text-xs text-gray-600">
             {label as string}
@@ -205,7 +205,7 @@ function ScoreScatter({ dataset, rows, shortlist, onPick }: { dataset: Dataset; 
           </label>
         ))}
       </div>
-      <div style={{ height: 300 }} role="img" aria-label={`Scatter plot of ${fieldLabel(x)} against ${fieldLabel(y)}`}>
+      <div style={{ height: 224 }} role="img" aria-label={`Scatter plot of ${fieldLabel(x)} against ${fieldLabel(y)}`}>
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 8, right: 12, bottom: 20, left: 0 }}>
             <CartesianGrid stroke={themeColors().grid} />

@@ -59,8 +59,8 @@ export default function Compare({ dataset, shortlist, onExplore, onAsk, canAsk }
         </select>
       </label>
       <DecisionView comparison={comparison} onAsk={canAsk ? onAsk : undefined} />
-      <RadarSection dataset={dataset} comparison={comparison} />
       <Heatmap comparison={comparison} rankBy={rankBy} onRankBy={setRankBy} onRemove={shortlist.remove} />
+      <RadarSection dataset={dataset} comparison={comparison} />
     </div>
   );
 }

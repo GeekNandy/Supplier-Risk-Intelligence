@@ -78,7 +78,7 @@ export default function Explorer({ dataset, shortlist }: { dataset: Dataset; sho
           </label>
         </div>
 
-        <div ref={top} className="mt-4 flex scroll-mt-4 flex-wrap items-center justify-between gap-3 text-sm">
+        <div ref={top} className="mt-4 flex scroll-mt-24 flex-wrap items-center justify-between gap-3 text-sm">
           <p className="text-gray-700" aria-live="polite">
             <strong className="font-mono">{total.toLocaleString()}</strong> suppliers match{total > 0 && <> · showing <span className="font-mono">{offset + 1}–{to}</span></>}
           </p>
@@ -94,7 +94,7 @@ export default function Explorer({ dataset, shortlist }: { dataset: Dataset; sho
             </EmptyState>
           </div>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <div className="sri-table-scroll mt-3 overflow-auto rounded-md border border-gray-200 bg-white" tabIndex={0} aria-label="Supplier results">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-gray-50 text-xs text-gray-600">
                 <tr>

@@ -3,16 +3,20 @@
 @import "@siemens/ix/dist/siemens-ix/siemens-ix.css" layer(ix);
 @import "tailwindcss";
 
+/* Reset iX document margins before utilities, without changing its web components. */
+@layer components {
+  h1, h2, h3, h4, p, ul, ol, dl, dd { margin: 0; }
+  ul, ol { padding: 0; list-style: none; }
+}
+
 /*
  * Design tokens. Every colour the components use resolves to a Siemens iX theme variable
- * (classic theme, dark schema), so components never hard-code hex values.
+ * (classic theme, light schema), with a restrained workspace palette.
  * Tailwind's palette names are kept as aliases so existing utility classes follow the theme.
  */
 @theme {
-  /* Siemens Sans is licensed and not bundled: it renders where installed, otherwise siemens.com's own fallbacks. */
-  --font-sans: "Siemens Sans", SiemensSans, "Helvetica Neue", "Segoe UI", Arial, ui-sans-serif, system-ui, sans-serif;
-  /* IDs and figures use the same sans with tabular numerals (as on siemens.com), not a code font. */
-  --font-mono: "Siemens Sans", SiemensSans, "Helvetica Neue", "Segoe UI", Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font-mono: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
 
   --color-white: var(--sri-surface);
   --color-gray-50: var(--theme-color-component-1);
@@ -64,96 +68,162 @@
   --color-red-900: var(--theme-color-alarm);
 }
 
-:root { --sri-page: var(--theme-color-2); --sri-surface: var(--theme-color-1); }
-[data-ix-color-schema="dark"] { --sri-page: var(--theme-color-1); --sri-surface: var(--theme-color-2); }
-
-/* Siemens-style brand layer on top of iX classic light: Deep Blue text, petrol accent, slate secondary text. */
 :root[data-ix-theme="classic"][data-ix-color-schema="light"] {
-  --theme-color-primary: #007a7d;
-  --theme-color-primary--hover: #00676a;
-  --theme-color-primary--active: #005557;
+  --theme-color-primary: #137b88;
+  --theme-color-primary--hover: #106773;
+  --theme-color-primary--active: #0d5660;
   --theme-color-primary--contrast: #fff;
-  --theme-color-ghost--selected: rgba(0, 153, 153, 0.12);
-  --theme-color-std-text: #000028;
-  --theme-color-contrast-text: #000028;
-  --theme-color-soft-text: #4c4c68;
-  --theme-color-x-weak-bdr: #dfe3e8;
-  --theme-color-weak-bdr: #c9cfd6;
-}
-
-/* Deep-blue hero: the iX dark scheme scoped to the header, with Siemens teal as its accent. */
-.sri-hero {
-  --theme-color-primary: #00cccc;
-  --theme-color-primary--hover: #33dede;
-  --theme-color-primary--active: #00b3b3;
-  --theme-color-primary--contrast: #000028;
-  --theme-color-ghost--selected: rgba(0, 204, 204, 0.16);
-  --sri-surface: rgba(255, 255, 255, 0.06);
-  --sri-hero-bg: #000028;
-  color: var(--theme-color-std-text);
-  background:
-    radial-gradient(900px 320px at 88% -40%, rgba(0, 204, 204, 0.28), transparent 70%),
-    radial-gradient(700px 260px at 10% 120%, rgba(0, 153, 153, 0.18), transparent 70%),
-    #000028;
-}
-
-/* Colour aliases resolve where they are declared, so the hero re-declares them in its own (dark) scope. */
-.sri-hero {
-  --color-white: var(--sri-surface);
-  --color-gray-50: var(--theme-color-component-1);
-  --color-gray-100: var(--theme-color-ghost--hover);
-  --color-gray-200: var(--theme-color-x-weak-bdr);
-  --color-gray-300: var(--theme-color-weak-bdr);
-  --color-gray-400: var(--theme-color-soft-bdr);
-  --color-gray-500: var(--theme-color-soft-text);
-  --color-gray-600: var(--theme-color-soft-text);
-  --color-gray-700: var(--theme-color-std-text);
-  --color-gray-800: var(--theme-color-std-text);
-  --color-gray-900: var(--theme-color-contrast-text);
-  --color-accent: var(--theme-color-primary);
-  --color-accent-strong: var(--theme-color-primary--hover);
-  --color-accent-soft: var(--theme-color-ghost--selected);
-  --color-on-accent: var(--theme-color-primary--contrast);
-  --color-emerald-50: color-mix(in srgb, var(--theme-color-success) 12%, transparent);
-  --color-emerald-100: color-mix(in srgb, var(--theme-color-success) 18%, transparent);
-  --color-emerald-200: color-mix(in srgb, var(--theme-color-success) 40%, transparent);
-  --color-emerald-300: color-mix(in srgb, var(--theme-color-success) 55%, transparent);
-  --color-emerald-700: var(--theme-color-success);
-  --color-emerald-800: var(--theme-color-success);
-  --color-emerald-900: var(--theme-color-success);
-  --color-emerald-950: var(--theme-color-success);
-  --color-amber-50: color-mix(in srgb, var(--theme-color-warning) 12%, transparent);
-  --color-amber-100: color-mix(in srgb, var(--theme-color-warning) 18%, transparent);
-  --color-amber-200: color-mix(in srgb, var(--theme-color-warning) 40%, transparent);
-  --color-amber-300: color-mix(in srgb, var(--theme-color-warning) 55%, transparent);
-  --color-amber-400: var(--theme-color-primary);
-  --color-amber-500: var(--theme-color-primary);
-  --color-amber-700: var(--theme-color-warning);
-  --color-amber-800: var(--theme-color-warning);
-  --color-amber-900: var(--theme-color-warning);
-  --color-amber-950: var(--theme-color-warning);
-  --color-orange-100: color-mix(in srgb, var(--theme-color-critical) 18%, transparent);
-  --color-orange-200: color-mix(in srgb, var(--theme-color-critical) 30%, transparent);
-  --color-orange-300: color-mix(in srgb, var(--theme-color-critical) 55%, transparent);
-  --color-orange-900: var(--theme-color-critical);
-  --color-orange-950: var(--theme-color-critical);
-  --color-red-50: color-mix(in srgb, var(--theme-color-alarm) 12%, transparent);
-  --color-red-100: color-mix(in srgb, var(--theme-color-alarm) 18%, transparent);
-  --color-red-200: color-mix(in srgb, var(--theme-color-alarm) 40%, transparent);
-  --color-red-300: color-mix(in srgb, var(--theme-color-alarm) 55%, transparent);
-  --color-red-600: var(--theme-color-alarm);
-  --color-red-700: var(--theme-color-alarm);
-  --color-red-900: var(--theme-color-alarm);
+  --theme-color-ghost--selected: #e9f3f4;
+  --theme-color-ghost--hover: #eaf0f3;
+  --theme-color-1: #fff;
+  --theme-color-2: #f6f8fa;
+  --theme-color-3: #fff;
+  --theme-color-component-1: #f7f9fb;
+  --theme-color-std-text: #334155;
+  --theme-color-contrast-text: #182534;
+  --theme-color-soft-text: #647184;
+  --theme-color-weak-text: #738094;
+  --theme-color-x-weak-bdr: #e3e8ee;
+  --theme-color-weak-bdr: #d1d9e2;
+  --theme-color-soft-bdr: #98a4b3;
+  --theme-color-focus-bdr: #137b88;
+  --theme-color-success: #277653;
+  --theme-color-warning: #93600b;
+  --theme-color-critical: #b34e17;
+  --theme-color-alarm: #bd3e44;
+  --theme-input--background: #fff;
+  --theme-input--background--hover: #fafcfd;
+  --theme-input--color: #334155;
+  --theme-input--border-color: #d1d9e2;
+  --theme-input--border-color--hover: #9aabba;
+  --theme-input--border-color--focus: #137b88;
+  --theme-input--border-radius: 5px;
 }
 
 :root {
+  --sri-page: #f6f8fa;
+  --sri-surface: #fff;
+  --sri-sidebar-width: 208px;
   color: var(--theme-color-std-text);
   background: var(--sri-page);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
 }
-body { margin: 0; background: var(--sri-page); }
+body { margin: 0; background: var(--sri-page); font-size: 14px; line-height: 1.5; }
+button, summary { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), summary { cursor: pointer; }
+button, a, input, select, textarea { transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease; }
+[hidden] { display: none !important; }
+
+.sri-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 25; display: flex; flex-direction: column; width: var(--sri-sidebar-width); background: #f1f4f7; border-right: 1px solid #e0e6ec; }
+.sri-brand { display: flex; align-items: flex-start; gap: 10px; padding: 25px 18px 30px; }
+.sri-brand-mark { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; margin-top: 2px; color: #fff; background: #235566; border-radius: 7px; }
+.sri-brand h1 { color: #203244; font-size: 15px; line-height: 1.35; font-weight: 650; letter-spacing: -.025em; }
+.sri-brand p { margin-top: 6px; color: #647184; font-size: 11px; }
+.sri-nav-label { margin: 0 20px 10px; color: #738094; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .11em; }
+.sri-nav { padding: 0 10px; }
+.sri-nav ol { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.sri-nav-item { display: flex; width: 100%; min-height: 40px; align-items: center; gap: 11px; padding: 0 12px; border: 1px solid transparent; border-radius: 6px; text-align: left; color: #58687a; font-size: 13px; font-weight: 500; }
+.sri-nav-item svg { flex-shrink: 0; opacity: .78; }
+.sri-nav-item:hover { color: #233b4e; background: #e9eef2; }
+.sri-nav-item.is-active { color: #126a76; background: #e1eef0; border-color: #d0e5e8; font-weight: 650; }
+.sri-nav-count { margin-left: auto; min-width: 21px; padding: 1px 5px; background: #fff; border-radius: 4px; font-size: 11px; font-variant-numeric: tabular-nums; text-align: center; }
+.sri-sidebar-note { margin-top: auto; padding: 20px 18px; color: #647184; font-size: 11px; line-height: 1.7; }
+.sri-sidebar-note .sri-label { display: block; margin-bottom: 4px; font-size: 10px; }
+.sri-model-state { display: flex; align-items: center; gap: 6px; margin-top: 18px; padding-top: 12px; border-top: 1px solid #dce3ea; }
+.sri-model-state > span { width: 5px; height: 5px; border-radius: 50%; background: #7b8796; }
+.sri-workspace { margin-left: var(--sri-sidebar-width); min-width: 0; }
+.sri-toolbar { position: sticky; top: 0; z-index: 22; display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #e3e8ee; background: rgba(255,255,255,.97); }
+.sri-breadcrumb { display: flex; align-items: center; gap: 12px; color: #738094; font-size: 12px; white-space: nowrap; }
+.sri-breadcrumb strong { color: #334155; font-weight: 550; }
+.sri-toolbar-actions { display: flex; min-width: 0; align-items: center; gap: 10px; }
+.sri-data-indicator { display: flex; min-width: 0; align-items: center; gap: 8px; color: #475569; font-size: 11px; }
+.sri-data-dot { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: #8795a5; }
+.sri-dataset-name { max-width: 270px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sri-dataset-count { font-variant-numeric: tabular-nums; color: #738094; }
+.sri-data-switch { color: #137b88; font-size: 11px; font-weight: 600; }
+.sri-data-switch:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sri-main { max-width: 1536px; margin: 0 auto; padding: 26px 28px 112px; outline: none; }
+.sri-view-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; margin-bottom: 22px; }
+.sri-view-header h2 { font-size: 25px; line-height: 1.25; font-weight: 600; letter-spacing: -.035em; }
+.sri-view-header p { max-width: 710px; margin-top: 6px; font-size: 13px; line-height: 1.6; }
+.sri-card { border: 1px solid #e1e7ed; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px #172b4d04; }
+.sri-card-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; min-height: 70px; padding: 18px 20px 16px; border-bottom: 1px solid #edf0f3; }
+.sri-card-header h2 { color: #25364a; font-size: 14px; font-weight: 600; letter-spacing: -.015em; }
+.sri-card-header p { max-width: 640px; margin-top: 4px; color: #647184; font-size: 12px; line-height: 1.5; }
+.sri-card-body { padding: 20px; }
+.sri-guide { margin: 24px 0 18px; color: #647184; font-size: 11px; }
+.sri-guide summary { width: fit-content; color: #52667b; font-weight: 600; }
+.sri-guide summary > span { margin-left: 8px; font-weight: 400; color: #738094; }
+.sri-guide-content { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0 2px; font-size: 12px; }
+.sri-kpi-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)) minmax(245px,1.25fr); gap: 14px; }
+.sri-kpi { display: flex; min-width: 0; min-height: 130px; flex-direction: column; justify-content: space-between; padding: 17px 18px; border: 1px solid #e1e7ed; border-radius: 8px; background: #fff; }
+.sri-kpi-value { color: #203244; font-size: 30px; line-height: 1.15; font-weight: 600; letter-spacing: -.035em; }
+.sri-kpi-note { overflow: hidden; margin-top: 7px; color: #647184; font-size: 10px; text-overflow: ellipsis; }
+.sri-kpi .sri-label { font-size: 10px; letter-spacing: .04em; }
+.sri-risk-breakdown { display: grid; gap: 0; margin-top: 8px; }
+.sri-risk-breakdown li { display: flex; min-height: 20px; align-items: center; justify-content: space-between; gap: 6px; font-size: 11px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.sri-risk-breakdown ix-pill { --theme-pill--height: 20px; }
+.sri-chart-group select { max-width: 170px; min-height: 32px; padding: 4px 8px; font-size: 11px; }
+.sri-scatter-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.sri-scatter-controls label { display: flex; min-width: 0; align-items: center; flex-direction: row; gap: 6px; white-space: nowrap; }
+.sri-scatter-controls select { width: 100%; min-height: 32px; padding: 4px 8px; font-size: 11px; }
+.sri-overview-filters label { flex-direction: row; align-items: center; gap: 8px; font-size: 11px; }
+.sri-overview-filters select { min-height: 32px; padding: 4px 8px; font-size: 12px; }
+.sri-overview-filters > p { padding-bottom: 7px; font-size: 11px; }
+.sri-glossary-panel { position: absolute; right: 0; z-index: 30; width: 320px; max-height: calc(100dvh - 100px); margin-top: 10px; padding: 18px; overflow-y: auto; border: 1px solid #dce4ec; border-radius: 8px; background: #fff; box-shadow: 0 12px 36px #1a2e4520; }
+.sri-shortlist { position: fixed; inset: auto 0 0 var(--sri-sidebar-width); z-index: 24; border-top: 1px solid #dce4ec; background: #fff; box-shadow: 0 -3px 16px #20324406; }
+.sri-shortlist-inner { display: flex; max-width: 1536px; min-height: 72px; align-items: center; gap: 16px; margin: auto; padding: 12px 28px; }
+.sri-shortlist ul { scrollbar-width: thin; }
+.sri-shortlist ul > li { max-width: 320px; }
+.sri-shortlist ul > li:not(:has(button)) { max-width: none; font-size: 12px; }
+.sri-table-scroll { max-height: max(280px,calc(100dvh - 390px)); scrollbar-width: thin; }
+.sri-table-scroll thead { position: sticky; top: 0; z-index: 2; background: #f7f9fb; }
+.sri-table-scroll th { color: #647184; font-size: 11px; }
+.sri-table-scroll td { padding-top: 10px; padding-bottom: 10px; }
+.sri-table-scroll tr:has(input:focus-visible) { outline: 2px solid #137b88; outline-offset: -2px; }
+.sri-skip-link { position: fixed; top: -60px; left: 20px; z-index: 100; padding: 10px 16px; border-radius: 5px; background: #fff; color: #137b88; }
+.sri-skip-link:focus { top: 12px; }
+
+@media (min-width: 1440px) { :root { --sri-sidebar-width: 224px; } .sri-main { padding: 30px 36px 112px; } .sri-shortlist-inner { padding-inline: 36px; } }
+@media (max-width: 1100px) { :root { --sri-sidebar-width: 180px; } .sri-brand { padding-inline: 14px; gap: 8px; } .sri-brand h1 { font-size: 13px; } .sri-breadcrumb > span { display: none; } .sri-kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .sri-main { padding-inline: 22px; } .sri-dataset-name { max-width: 210px; } }
+@media (max-width: 760px) {
+  :root { --sri-sidebar-width: 0px; }
+  .sri-sidebar { position: relative; width: 100%; border-right: none; border-bottom: 1px solid #e0e6ec; }
+  .sri-brand { padding: 14px 16px; align-items: center; }
+  .sri-brand h1 { font-size: 13px; }
+  .sri-brand h1 br { display: none; }
+  .sri-brand p { margin-top: 2px; font-size: 10px; }
+  .sri-brand-mark { width: 28px; height: 28px; }
+  .sri-nav-label, .sri-sidebar-note { display: none; }
+  .sri-nav { padding: 0 8px 7px; }
+  .sri-nav ol { flex-direction: row; gap: 2px; }
+  .sri-nav li { min-width: 0; flex: 1; }
+  .sri-nav-item { justify-content: center; gap: 4px; min-height: 36px; padding: 0 5px; font-size: 11px; }
+  .sri-nav-item svg { display: none; }
+  .sri-nav-count { min-width: 15px; margin-left: 0; font-size: 10px; padding: 0 3px; }
+  .sri-toolbar { min-height: 58px; padding: 10px 16px; flex-wrap: wrap; gap: 8px; }
+  .sri-breadcrumb { display: none; }
+  .sri-toolbar-actions { width: 100%; flex-wrap: wrap; gap: 8px; }
+  .sri-data-indicator { flex-basis: 100%; }
+  .sri-dataset-name { max-width: calc(100vw - 105px); }
+  .sri-main { padding: 22px 16px 112px; }
+  .sri-view-header h2 { font-size: 23px; }
+  .sri-view-header p { font-size: 12px; }
+  .sri-kpi-grid { gap: 10px; }
+  .sri-kpi { min-height: 124px; padding: 14px; }
+  .sri-kpi-value { font-size: 26px; }
+  .sri-kpi-note { font-size: 10px; }
+  .sri-card-body, .sri-card-header { padding: 16px; }
+  .sri-shortlist-inner { min-height: 70px; gap: 10px; padding: 10px 16px; }
+  .sri-shortlist ul > li { font-size: 11px; }
+  .sri-guide summary > span { display: none; }
+  .sri-overview-filters label { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .sri-glossary-panel { position: fixed; inset: auto 16px 88px; width: auto; max-height: min(60dvh,calc(100dvh - 240px)); }
+  .sri-table-scroll { max-height: 450px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
 /* Text fields and selects share the iX input look (native elements keep their <label>s). */
 .sri-field {
@@ -162,8 +232,12 @@ body { margin: 0; background: var(--sri-page); }
   border-radius: var(--theme-input--border-radius);
   color: var(--theme-input--color);
   font: inherit;
-  min-height: 2rem;
-  padding: 0.25rem 0.5rem;
+  min-height: 36px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 20px;
 }
 .sri-field:hover:not(:disabled) { background-color: var(--theme-input--background--hover); border-color: var(--theme-input--border-color--hover); }
 .sri-field:focus { border-color: var(--theme-input--border-color--focus); outline: 1px solid var(--theme-color-focus-bdr); outline-offset: 0; }
@@ -182,6 +256,6 @@ select.sri-field option, select.sri-field optgroup { background: var(--theme-col
 .overflow-x-auto, .overflow-auto { position: relative; }
 
 /* Small uppercase label used across cards. */
-.sri-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--theme-color-soft-text); }
+.sri-label { font-size: 11px; font-weight: 600; letter-spacing: 0.055em; text-transform: uppercase; color: var(--theme-color-soft-text); }
 
 .font-mono { font-variant-numeric: tabular-nums; }

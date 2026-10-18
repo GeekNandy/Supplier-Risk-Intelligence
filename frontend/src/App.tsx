@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, type Status } from './api';
 import Chat from './Chat';
 import Compare from './Compare';
@@ -11,7 +11,6 @@ import Overview from './Overview';
 import Research from './Research';
 import { MAX_SHORTLIST, useShortlist, type Shortlist } from './shortlist';
 import SupplierDetail from './SupplierDetail';
-import Train from './Train';
 import { Btn, EmptyState, ErrorBox, LevelBadge, Skeleton, SkeletonRows, ViewHeader } from './ui';
 import { useWorkspace, WorkspaceContext } from './workspace';
 
@@ -74,29 +73,31 @@ export default function App() {
 
   return (
     <WorkspaceContext.Provider value={workspace}>
-      <div className="min-h-screen pb-28">
-        <header className="sri-hero" data-ix-theme="classic" data-ix-color-schema="dark">
-          <div className="mx-auto max-w-[1200px] px-6 pt-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <p className="sri-label !text-accent">Rail procurement · Supplier risk</p>
-              <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
-                <DataIndicator dataset={dataset} onSwitch={() => setLoaderOpen(true)} />
-                <Btn variant="primary" onClick={() => setLoaderOpen(true)}>Load your data</Btn>
-                <Glossary />
-              </div>
-            </div>
-            <h1 className="mt-6 text-[32px] font-bold leading-tight text-gray-900 sm:text-[40px]">Supplier Risk Intelligence</h1>
-            <p className="mt-2 max-w-2xl text-base text-gray-700">Explore, compare and research rail component suppliers, with every number traceable to its source.</p>
-            <p className="mt-1 text-xs text-gray-500">Built for the Siemens Supplier Risk Intelligence challenge</p>
+      <div className="sri-app">
+        <a className="sri-skip-link" href="#workspace-content">Skip to workspace</a>
+        <aside className="sri-sidebar">
+          <div className="sri-brand">
+            <span className="sri-brand-mark" aria-hidden><WorkspaceIcon name="overview" /></span>
+            <div><h1>Supplier Risk <br />Intelligence</h1><p>Rail procurement</p></div>
           </div>
-          <div className="mt-4">
-            <Train />
-          </div>
+          <p className="sri-nav-label">Workspace</p>
           <RouteNav tab={tab} onGo={go} shortlistCount={shortlist.ids.length} />
-        </header>
-
-        <main className="mx-auto max-w-[1200px] px-6 py-8">
-          <Guide onStep={go} onLoad={() => setLoaderOpen(true)} />
+          <div className="sri-sidebar-note">
+            <span className="sri-label">Your data, your device</span>
+            <p>Uploaded files stay in your browser.</p>
+            <div className="sri-model-state"><span aria-hidden />{status?.chat_mode === 'live' ? 'Live AI configured' : status?.chat_mode === 'data_only' ? 'Data-only answers' : status ? 'AI configuration required' : 'Checking AI configuration'}</div>
+          </div>
+        </aside>
+        <div className="sri-workspace">
+          <header className="sri-toolbar">
+            <p className="sri-breadcrumb"><span>Workspace</span><span aria-hidden>/</span><strong>{TABS.find(item => item.id === tab)?.label}</strong></p>
+            <div className="sri-toolbar-actions">
+              <DataIndicator dataset={dataset} onSwitch={() => setLoaderOpen(true)} />
+              <Btn variant="secondary" onClick={() => setLoaderOpen(true)}>Load your data</Btn>
+              <Glossary />
+            </div>
+          </header>
+        <main id="workspace-content" className="sri-main" tabIndex={-1}>
           {notice && (
             <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-700" role="status">
               <span>{notice}</span>
@@ -112,6 +113,7 @@ export default function App() {
               {/* Panels stay mounted so filters, answers and reports survive tab switches. */}
               <div hidden={tab !== 'overview'}>
                 <Overview dataset={dataset} shortlist={shortlist} />
+                <Guide onStep={go} onLoad={() => setLoaderOpen(true)} />
                 {dataset.kind === 'demo' && (
                   <section className="mt-8">
                     <p className="mb-2 text-sm font-semibold text-gray-900">Have your own supplier list?</p>
@@ -136,6 +138,7 @@ export default function App() {
             </>
           )}
         </main>
+        </div>
 
         {dataset && tab !== 'research' && <ShortlistTray shortlist={shortlist} onCompare={tab === 'compare' ? undefined : () => go('compare')} />}
         {dataset && detailId && <SupplierDetail id={detailId} dataset={dataset} shortlist={shortlist} onClose={closeDetail} />}
@@ -153,36 +156,30 @@ const TAB_HINTS: Record<Tab, string> = {
   research: 'Real-company check',
 };
 
-/** Tabs drawn as a route line: stations joined by a track, the current station in the primary colour. */
+function WorkspaceIcon({ name }: { name: Tab }) {
+  const paths: Record<Tab, string> = {
+    overview: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
+    explore: 'M4 4h16v16H4z M4 9h16 M9 9v11 M4 14h16',
+    compare: 'M6 4v16 M18 4v16 M3 8h6 M15 16h6 M10 5h4 M10 19h4',
+    ask: 'M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 3v-3H3V6a2 2 0 0 1 2-2z M8 9h8 M8 13h5',
+    research: 'M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15z M16 16l5 5 M7 10h7 M10.5 6.5v7',
+  };
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={paths[name]} /></svg>;
+}
+
 function RouteNav({ tab, onGo, shortlistCount }: { tab: Tab; onGo: (tab: Tab) => void; shortlistCount: number }) {
   return (
-    <nav className="mx-auto max-w-[1200px] overflow-x-auto px-6 pb-5 pt-4" aria-label="Workspace">
-      <ol className="relative grid min-w-[640px] grid-cols-5">
-        <span className="absolute left-[10%] right-[10%] top-[11px] h-0.5 bg-gray-300" aria-hidden />
-        {TABS.map(item => {
-          const active = tab === item.id;
-          return (
-            <li key={item.id} className="relative flex justify-center">
-              <button
-                onClick={() => onGo(item.id)}
-                aria-current={active ? 'page' : undefined}
-                className="group flex flex-col items-center gap-1.5 rounded px-2 pb-1 text-center"
-              >
-                <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${active ? 'border-accent bg-accent' : 'border-gray-400 bg-[var(--sri-hero-bg)] group-hover:border-accent'}`}
-                  aria-hidden
-                >
-                  <span className={`h-2 w-2 rounded-full ${active ? 'bg-on-accent' : 'bg-transparent group-hover:bg-accent'}`} />
-                </span>
-                <span className={`text-sm ${active ? 'font-bold text-accent' : 'font-semibold text-gray-800 group-hover:text-gray-900'}`}>
-                  {item.label}
-                  {item.id === 'compare' && shortlistCount > 0 && <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 font-mono text-xs text-gray-700">{shortlistCount}</span>}
-                </span>
-                <span className="text-xs text-gray-500">{TAB_HINTS[item.id]}</span>
-              </button>
-            </li>
-          );
-        })}
+    <nav className="sri-nav" aria-label="Workspace">
+      <ol>
+        {TABS.map(item => (
+          <li key={item.id}>
+            <button onClick={() => onGo(item.id)} aria-current={tab === item.id ? 'page' : undefined} className={`sri-nav-item ${tab === item.id ? 'is-active' : ''}`} title={TAB_HINTS[item.id]}>
+              <WorkspaceIcon name={item.id} />
+              <span>{item.label}</span>
+              {item.id === 'compare' && shortlistCount > 0 && <span className="sri-nav-count">{shortlistCount}</span>}
+            </button>
+          </li>
+        ))}
       </ol>
     </nav>
   );
@@ -210,35 +207,43 @@ function LoadingView() {
 
 function DataIndicator({ dataset, onSwitch }: { dataset: Dataset | null; onSwitch: () => void }) {
   return (
-    <div className="flex min-h-8 min-w-0 max-w-full items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 py-1 text-sm">
-      <span className="sri-label">Data</span>
+    <div className="sri-data-indicator">
+      <span className="sri-data-dot" aria-hidden />
       {dataset
-        ? <span className="min-w-0 max-w-80 truncate font-medium text-gray-900" title={dataset.label}>{dataset.label} · <span className="font-mono">{dataset.rows.length.toLocaleString()}</span> rows</span>
-        : <span className="text-gray-500">loading…</span>}
-      <button className="font-bold text-accent underline underline-offset-2 hover:no-underline" onClick={onSwitch}>Switch</button>
+        ? <span className="sri-dataset-name" title={`${dataset.label} · ${dataset.rows.length.toLocaleString()} rows`}>{dataset.label} · <span className="sri-dataset-count">{dataset.rows.length.toLocaleString()} rows</span></span>
+        : <span className="text-gray-500">Loading data…</span>}
+      <button className="sri-data-switch" onClick={onSwitch}>Switch</button>
     </div>
   );
 }
 
 function Glossary() {
   const [open, setOpen] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => {
+    setOpen(false);
+    container.current?.querySelector<HTMLElement>('ix-button')?.focus();
+  }, []);
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') close(); };
+    const onOutside = (event: PointerEvent) => { if (!container.current?.contains(event.target as Node)) setOpen(false); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+    window.addEventListener('pointerdown', onOutside);
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('pointerdown', onOutside); };
+  }, [open, close]);
   return (
-    <div className="relative">
-      <Btn variant="secondary" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="glossary-panel">Glossary</Btn>
+    <div ref={container} className="relative">
+      <Btn variant="tertiary" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="glossary-panel">Glossary</Btn>
       {open && (
-        <div id="glossary-panel" className="absolute right-0 z-30 mt-2 w-80 rounded border border-gray-300 bg-[var(--theme-color-3)] p-4 shadow-lg">
+        <div id="glossary-panel" className="sri-glossary-panel" role="region" aria-label="Risk glossary">
+          <p className="mb-3 font-semibold text-gray-900">Risk glossary</p>
           <dl className="space-y-3 text-sm">
             {GLOSSARY.map(item => (
               <div key={item.term}><dt className="font-semibold text-gray-900">{item.term}</dt><dd className="text-gray-600">{item.definition}</dd></div>
             ))}
           </dl>
-          <button className="mt-3 text-sm text-gray-600 underline" onClick={() => setOpen(false)}>Close</button>
+          <button className="mt-3 text-sm text-gray-600 underline" onClick={close}>Close</button>
         </div>
       )}
     </div>
@@ -255,8 +260,9 @@ function Guide({ onStep, onLoad }: { onStep: (tab: Tab) => void; onLoad: () => v
     { label: 'Research a real company', action: () => onStep('research') },
   ];
   return (
-    <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2 rounded border border-gray-200 bg-white px-4 py-3 text-sm">
-      <span className="font-semibold text-gray-900">How to use this</span>
+    <details className="sri-guide">
+      <summary>Quick start <span>Explore, compare and research suppliers</span></summary>
+      <div className="sri-guide-content">
       <ol className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {steps.map((step, index) => (
           <li key={step.label} className="flex items-center gap-2">
@@ -268,15 +274,16 @@ function Guide({ onStep, onLoad }: { onStep: (tab: Tab) => void; onLoad: () => v
         ))}
       </ol>
       <button className="ml-auto text-gray-500 hover:text-gray-900" onClick={dismiss} aria-label="Dismiss the guide">Dismiss ✕</button>
-    </div>
+      </div>
+    </details>
   );
 }
 
 function ShortlistTray({ shortlist, onCompare }: { shortlist: Shortlist; onCompare?: () => void }) {
   const { openSupplier } = useWorkspace();
   return (
-    <aside className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white" aria-label="Shortlist">
-      <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-6 py-3">
+    <aside className="sri-shortlist" aria-label="Shortlist">
+      <div className="sri-shortlist-inner">
         <div className="shrink-0">
           <p className="text-sm font-semibold text-gray-900">Shortlist</p>
           <p className={`font-mono text-xs ${shortlist.full ? 'font-semibold text-amber-800' : 'text-gray-500'}`}>{shortlist.ids.length} / {MAX_SHORTLIST}{shortlist.full ? ' · full' : ''}</p>
